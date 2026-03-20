@@ -28,7 +28,7 @@ Works system-wide. YouTube, Spotify, games, everything.
 - **Overlay** - shows volume popup when you change volume
 - **No internet** - the app can't send or receive any data
 
-On Android 13+, you may need to allow restricted settings first: **Settings > Apps > 32steps > Allow restricted settings**.
+On Android 13+, you may need to allow restricted settings first. Go to **Settings > Apps > 32steps**, tap the three dots in the top right corner, then tap **Allow restricted settings**.
 
 ## Download
 
