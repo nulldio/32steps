@@ -139,8 +139,7 @@
                 android:hint="32"
                 android:background="@android:color/transparent"
                 android:textSize="15sp"
-                android:textAlignment="textEnd"
-                android:minWidth="48dp" />
+                android:gravity="end" />
 
         </LinearLayout>
 
