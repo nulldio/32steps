@@ -12,3 +12,6 @@ local.properties
 preview.html
 icon-preview.html
 release-key.jks
+*.apk
+fdroid-metadata.yml
+.claude/
