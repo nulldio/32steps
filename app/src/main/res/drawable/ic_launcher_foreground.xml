@@ -10,7 +10,8 @@
         android:scaleX="0.6"
         android:scaleY="0.6"
         android:pivotX="54"
-        android:pivotY="54">
+        android:pivotY="54"
+        android:translateY="2">
         <!-- Bar 1 (shortest) -->
         <path
             android:fillColor="#FFFFFFFF"
