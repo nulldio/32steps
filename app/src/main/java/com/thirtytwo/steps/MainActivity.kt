@@ -173,17 +173,17 @@ class MainActivity : AppCompatActivity() {
     private fun updateStatus() {
         val accessibilityOk = isAccessibilityEnabled()
         val overlayOk = Settings.canDrawOverlays(this)
-        val allDone = accessibilityOk && overlayOk
+
 
         val next = nextMissingPermission()
 
         if (next == null) {
             // All permissions granted — hide setup UI completely
-            statusText.visibility = android.view.View.GONE
+            findViewById<android.view.View>(R.id.status_card).visibility = android.view.View.GONE
             setupBtn.visibility = android.view.View.GONE
         } else {
             // Show setup UI
-            statusText.visibility = android.view.View.VISIBLE
+            findViewById<android.view.View>(R.id.status_card).visibility = android.view.View.VISIBLE
             setupBtn.visibility = android.view.View.VISIBLE
 
             val sb = StringBuilder()

@@ -19,17 +19,18 @@ class VolumeOverlay(private val context: Context) {
 
     private var overlayView: android.view.View? = null
     private var volumeFill: FrameLayout? = null
+    private var stepText: TextView? = null
     private var hideRunnable: Runnable? = null
     private var isShowing = false
 
     // Total height of the overlay in pixels
-    private val overlayHeightDp = 180
+    private val overlayHeightDp = 200
     private val overlayHeightPx: Int
         get() = (overlayHeightDp * context.resources.displayMetrics.density).toInt()
 
     private val layoutParams: WindowManager.LayoutParams
         get() {
-            val widthDp = 42
+            val widthDp = 46
             val widthPx = (widthDp * context.resources.displayMetrics.density).toInt()
             val heightPx = overlayHeightPx
 
@@ -59,6 +60,7 @@ class VolumeOverlay(private val context: Context) {
                 val inflater = LayoutInflater.from(context)
                 overlayView = inflater.inflate(R.layout.overlay_volume, null)
                 volumeFill = overlayView?.findViewById(R.id.volume_fill)
+                stepText = overlayView?.findViewById(R.id.step_text)
 
                 try {
                     windowManager.addView(overlayView, layoutParams)
@@ -67,6 +69,9 @@ class VolumeOverlay(private val context: Context) {
                     return@post
                 }
             }
+
+            // Update step counter
+            stepText?.text = "$currentStep"
 
             // Set fill height based on volume percentage
             val fraction = if (totalSteps > 0) currentStep.toFloat() / totalSteps else 0f
@@ -87,6 +92,7 @@ class VolumeOverlay(private val context: Context) {
                 } catch (_: Exception) {}
                 overlayView = null
                 volumeFill = null
+                stepText = null
                 isShowing = false
             }
         }

@@ -1,0 +1,24 @@
+Categories:
+  - Multimedia
+License: MIT
+AuthorName: nulldio
+SourceCode: https://github.com/nulldio/32steps
+IssueTracker: https://github.com/nulldio/32steps/issues
+
+AutoName: 32steps
+
+RepoType: git
+Repo: https://github.com/nulldio/32steps.git
+
+Builds:
+  - versionName: '1.0'
+    versionCode: 1
+    commit: v1.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.0'
+CurrentVersionCode: 1

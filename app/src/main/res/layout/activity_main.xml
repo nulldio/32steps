@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF121212"
+    android:background="?android:colorBackground"
     android:fillViewport="true">
 
 <LinearLayout
@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:text="32steps"
         android:textSize="28sp"
-        android:textColor="#FFFFFFFF"
+        android:textColor="?colorOnSurface"
         android:textStyle="bold"
         android:fontFamily="sans-serif-medium"
         android:layout_marginBottom="4dp" />
@@ -27,14 +27,14 @@
         android:layout_height="wrap_content"
         android:text="Fine-grained volume control"
         android:textSize="14sp"
-        android:textColor="#80FFFFFF"
+        android:textColor="?colorOnSurfaceVariant"
         android:layout_marginBottom="28dp" />
 
     <!-- Volume control card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#FF1A1A1A"
+        app:cardBackgroundColor="?colorSurfaceVariant"
         app:cardCornerRadius="20dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
@@ -58,14 +58,15 @@
                     android:layout_height="18dp"
                     android:src="@drawable/ic_music"
                     android:layout_marginEnd="10dp"
-                    android:contentDescription="Volume" />
+                    android:contentDescription="Volume"
+                    app:tint="?colorOnSurface" />
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Media"
-                    android:textColor="#FFFFFFFF"
+                    android:textColor="?colorOnSurface"
                     android:textSize="15sp" />
 
                 <TextView
@@ -73,7 +74,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0/32"
-                    android:textColor="#80FFFFFF"
+                    android:textColor="?colorOnSurfaceVariant"
                     android:textSize="14sp" />
 
             </LinearLayout>
@@ -84,9 +85,9 @@
                 android:layout_height="wrap_content"
                 android:max="32"
                 android:progress="0"
-                android:progressTint="#FFFFFFFF"
-                android:thumbTint="#FFFFFFFF"
-                android:progressBackgroundTint="#33FFFFFF" />
+                android:progressTint="?colorOnSurface"
+                android:thumbTint="?colorOnSurface"
+                android:progressBackgroundTint="?colorOnSurfaceVariant" />
 
         </LinearLayout>
 
@@ -96,7 +97,7 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#FF1A1A1A"
+        app:cardBackgroundColor="?colorSurfaceVariant"
         app:cardCornerRadius="20dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
@@ -112,7 +113,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Volume steps"
-                android:textColor="#80FFFFFF"
+                android:textColor="?colorOnSurfaceVariant"
                 android:textSize="13sp"
                 android:layout_marginBottom="10dp" />
 
@@ -122,8 +123,8 @@
                 android:layout_height="wrap_content"
                 android:inputType="number"
                 android:maxLength="4"
-                android:textColor="#FFFFFFFF"
-                android:textColorHint="#40FFFFFF"
+                android:textColor="?colorOnSurface"
+                android:textColorHint="?colorOnSurfaceVariant"
                 android:hint="32"
                 android:background="@android:color/transparent"
                 android:textSize="32sp"
@@ -139,7 +140,7 @@
         android:id="@+id/status_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#FF1A1A1A"
+        app:cardBackgroundColor="?colorSurfaceVariant"
         app:cardCornerRadius="20dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
@@ -149,7 +150,7 @@
             android:id="@+id/status_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF"
+            android:textColor="?colorOnSurface"
             android:textSize="13sp"
             android:lineSpacingExtra="6dp"
             android:padding="20dp" />
@@ -163,8 +164,6 @@
         android:layout_height="56dp"
         android:text="Set up"
         android:textSize="15sp"
-        android:textColor="#FF121212"
-        app:backgroundTint="#FFFFFFFF"
         app:cornerRadius="16dp" />
 
 </LinearLayout>

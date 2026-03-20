@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:uk.community.huawei.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:www.xda-developers.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cp /Users/laid/Desktop/32steps1.png /Users/laid/ansteps/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)",
+      "Bash(cp /Users/laid/Desktop/32steps2.png /Users/laid/ansteps/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)",
+      "Read(//Users/laid/Desktop/**)",
+      "Read(//Users/laid/Downloads/**)",
+      "Bash(cp /Users/laid/Downloads/32steps1.png /Users/laid/ansteps/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)",
+      "Bash(cp /Users/laid/Downloads/32steps2.png /Users/laid/ansteps/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)",
+      "Bash(git tag:*)"
+    ]
+  }
+}

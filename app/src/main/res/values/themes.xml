@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Light theme -->
     <style name="Theme.ThirtyTwoSteps" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#FFFFFFFF</item>
-        <item name="colorOnPrimary">#FF121212</item>
-        <item name="colorSurface">#FF121212</item>
-        <item name="colorOnSurface">#FFFFFFFF</item>
-        <item name="colorSurfaceVariant">#FF1E1E1E</item>
-        <item name="colorOnSurfaceVariant">#FFAAAAAA</item>
+        <item name="colorPrimary">#FF121212</item>
+        <item name="colorOnPrimary">#FFFFFFFF</item>
+        <item name="colorSurface">#FFFAFAFA</item>
+        <item name="colorOnSurface">#FF121212</item>
+        <item name="colorSurfaceVariant">#FFF0F0F0</item>
+        <item name="colorOnSurfaceVariant">#FF666666</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">#FF121212</item>
+        <item name="android:windowBackground">#FFFAFAFA</item>
     </style>
 </resources>
