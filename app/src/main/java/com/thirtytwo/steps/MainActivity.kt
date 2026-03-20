@@ -6,11 +6,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.text.Editable
-import android.text.TextWatcher
+import android.view.View
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
-import android.widget.EditText
+import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +18,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: PrefsManager
     private lateinit var statusText: TextView
-    private lateinit var stepsInput: EditText
+    private lateinit var stepsPicker: NumberPicker
     private lateinit var volumeSeekbar: SeekBar
     private lateinit var volumeCounter: TextView
     private lateinit var volumeController: VolumeController
@@ -40,34 +39,25 @@ class MainActivity : AppCompatActivity() {
         prefs = PrefsManager(this)
         volumeController = VolumeController.getInstance(this)
         statusText = findViewById(R.id.status_text)
-        stepsInput = findViewById(R.id.steps_input)
+        stepsPicker = findViewById(R.id.steps_picker)
         volumeSeekbar = findViewById(R.id.volume_seekbar)
         volumeCounter = findViewById(R.id.volume_counter)
         setupBtn = findViewById(R.id.btn_setup)
 
-        stepsInput.setText(prefs.totalSteps.toString())
-        stepsInput.filters = arrayOf(android.text.InputFilter.LengthFilter(4))
-        updateVolumeBar()
+        // Configure number picker
+        stepsPicker.minValue = 2
+        stepsPicker.maxValue = 1000
+        stepsPicker.value = prefs.totalSteps
+        stepsPicker.wrapSelectorWheel = false
 
-        // Auto-save as user types, clamp to 1000
-        stepsInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val raw = s?.toString()?.toIntOrNull() ?: return
-                if (raw > 1000) {
-                    stepsInput.setText("1000")
-                    stepsInput.setSelection(4)
-                    return
-                }
-                if (raw >= 2) {
-                    prefs.totalSteps = raw.coerceIn(2, 1000)
-                    volumeController.syncFromSystem()
-                    updateVolumeBar()
-                    updateStatus()
-                }
-            }
-        })
+        // Show values in steps of 1
+        stepsPicker.setOnValueChangedListener { _, _, newVal ->
+            prefs.totalSteps = newVal
+            volumeController.syncFromSystem()
+            updateVolumeBar()
+        }
+
+        updateVolumeBar()
 
         // Seekbar for in-app volume control
         volumeSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -95,7 +85,6 @@ class MainActivity : AppCompatActivity() {
         updateVolumeBar()
         updateStatus()
 
-        // Auto-advance guided setup
         if (pendingSetup) {
             pendingSetup = false
             val next = nextMissingPermission()
@@ -174,17 +163,14 @@ class MainActivity : AppCompatActivity() {
         val accessibilityOk = isAccessibilityEnabled()
         val overlayOk = Settings.canDrawOverlays(this)
 
-
         val next = nextMissingPermission()
 
         if (next == null) {
-            // All permissions granted — hide setup UI completely
-            findViewById<android.view.View>(R.id.status_card).visibility = android.view.View.GONE
-            setupBtn.visibility = android.view.View.GONE
+            findViewById<View>(R.id.status_card).visibility = View.GONE
+            setupBtn.visibility = View.GONE
         } else {
-            // Show setup UI
-            findViewById<android.view.View>(R.id.status_card).visibility = android.view.View.VISIBLE
-            setupBtn.visibility = android.view.View.VISIBLE
+            findViewById<View>(R.id.status_card).visibility = View.VISIBLE
+            setupBtn.visibility = View.VISIBLE
 
             val sb = StringBuilder()
             sb.appendLine(if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service")

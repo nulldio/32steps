@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Light theme -->
     <style name="Theme.ThirtyTwoSteps" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#FF121212</item>
+        <item name="colorPrimary">#FF1C1C1E</item>
         <item name="colorOnPrimary">#FFFFFFFF</item>
-        <item name="colorSurface">#FFFAFAFA</item>
-        <item name="colorOnSurface">#FF121212</item>
-        <item name="colorSurfaceVariant">#FFF0F0F0</item>
-        <item name="colorOnSurfaceVariant">#FF666666</item>
+        <item name="colorSurface">#FFFFFFFF</item>
+        <item name="colorOnSurface">#FF1C1C1E</item>
+        <item name="colorSurfaceVariant">#FFF2F2F7</item>
+        <item name="colorOnSurfaceVariant">#FF8E8E93</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowBackground">#FFFAFAFA</item>
+        <item name="android:windowBackground">#FFFFFFFF</item>
+    </style>
+
+    <style name="StepsPicker">
+        <item name="android:textColorPrimary">?colorOnSurface</item>
+        <item name="android:textSize">20sp</item>
     </style>
 </resources>

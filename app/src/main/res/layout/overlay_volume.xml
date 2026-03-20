@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="46dp"
-    android:layout_height="200dp"
+    android:layout_width="42dp"
+    android:layout_height="240dp"
     android:background="@drawable/overlay_bg">
 
     <!-- Volume fill (grows from bottom) -->
@@ -11,25 +11,5 @@
         android:layout_height="0dp"
         android:layout_gravity="bottom"
         android:background="@drawable/overlay_fill" />
-
-    <!-- Step counter at top -->
-    <TextView
-        android:id="@+id/step_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="10dp"
-        android:text="16"
-        android:textColor="#80FFFFFF"
-        android:textSize="11sp"
-        android:textAlignment="center" />
-
-    <!-- Music note icon (bottom of unfilled area) -->
-    <ImageView
-        android:layout_width="14dp"
-        android:layout_height="14dp"
-        android:layout_gravity="center"
-        android:src="@drawable/ic_music"
-        android:contentDescription="Volume" />
 
 </FrameLayout>
