@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF121212"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="32steps"
+        android:textSize="28sp"
+        android:textColor="#FFFFFFFF"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fine-grained volume control"
+        android:textSize="13sp"
+        android:textColor="#AAAAAA"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Volume control bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FF1E1E1E"
+        android:padding="14dp"
+        android:layout_marginBottom="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:src="@drawable/ic_music"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="Volume" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Media"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/volume_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0/32"
+                android:textColor="#AAFFFFFF"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <SeekBar
+            android:id="@+id/volume_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="32"
+            android:progress="0"
+            android:progressTint="#FFFFFFFF"
+            android:thumbTint="#FFFFFFFF"
+            android:progressBackgroundTint="#33FFFFFF" />
+
+    </LinearLayout>
+
+    <!-- Step count setting -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Number of volume steps"
+        android:textColor="#FFFFFFFF"
+        android:textSize="14sp"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/steps_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:maxLength="4"
+        android:textColor="#FFFFFFFF"
+        android:textColorHint="#666666"
+        android:hint="32"
+        android:background="#FF1E1E1E"
+        android:padding="12dp"
+        android:textSize="16sp"
+        android:textAlignment="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Status -->
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFFFF"
+        android:textSize="12sp"
+        android:lineSpacingExtra="3dp"
+        android:fontFamily="monospace"
+        android:background="#FF1E1E1E"
+        android:padding="14dp"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Single guided setup button -->
+    <Button
+        android:id="@+id/btn_setup"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Set up"
+        android:textSize="14sp"
+        android:backgroundTint="#FF6200EE" />
+
+</LinearLayout>
+</ScrollView>

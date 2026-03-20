@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Volume bars scaled down and centered in safe zone -->
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:pivotX="54"
+        android:pivotY="54">
+        <!-- Bar 1 (shortest) -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M28,68 L28,58 Q28,56 30,56 L33,56 Q35,56 35,58 L35,68 Q35,70 33,70 L30,70 Q28,70 28,68 Z" />
+        <!-- Bar 2 -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M39,68 L39,52 Q39,50 41,50 L44,50 Q46,50 46,52 L46,68 Q46,70 44,70 L41,70 Q39,70 39,68 Z" />
+        <!-- Bar 3 -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M50,68 L50,44 Q50,42 52,42 L55,42 Q57,42 57,44 L57,68 Q57,70 55,70 L52,70 Q50,70 50,68 Z" />
+        <!-- Bar 4 -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M61,68 L61,38 Q61,36 63,36 L66,36 Q68,36 68,38 L68,68 Q68,70 66,70 L63,70 Q61,70 61,68 Z" />
+        <!-- Bar 5 (tallest) -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M72,68 L72,32 Q72,30 74,30 L77,30 Q79,30 79,32 L79,68 Q79,70 77,70 L74,70 Q72,70 72,68 Z" />
+    </group>
+
+</vector>

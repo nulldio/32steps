@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple">#FF6200EE</color>
+    <color name="background">#FF121212</color>
+    <color name="surface">#FF1E1E1E</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="gray">#FFAAAAAA</color>
+    <color name="icon_background">#FF000000</color>
+</resources>
