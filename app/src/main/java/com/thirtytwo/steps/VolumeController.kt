@@ -208,7 +208,8 @@ class VolumeController(private val context: Context) {
      * System volume is the ceiling; gain offset attenuates the remainder.
      */
     private fun computeMapping(step: Int): Pair<Int, Int> {
-        val fraction = (step - 1).toFloat() / (totalSteps - 1).coerceAtLeast(1)
+        val fraction = if (totalSteps <= 1) 1f
+            else (step - 1).toFloat() / (totalSteps - 1)
         val floatSysVol = 1 + fraction * (systemMax - 1)
         val sysVol = ceil(floatSysVol).toInt().coerceIn(1, systemMax)
         val attenuation = sysVol - floatSysVol
