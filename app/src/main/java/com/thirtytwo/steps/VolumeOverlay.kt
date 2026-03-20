@@ -8,7 +8,7 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
-import android.widget.SeekBar
+import android.widget.FrameLayout
 import android.widget.TextView
 
 class VolumeOverlay(private val context: Context) {
@@ -18,19 +18,24 @@ class VolumeOverlay(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
 
     private var overlayView: android.view.View? = null
-    private var seekBar: SeekBar? = null
-    private var stepText: TextView? = null
+    private var volumeFill: FrameLayout? = null
     private var hideRunnable: Runnable? = null
     private var isShowing = false
 
+    // Total height of the overlay in pixels
+    private val overlayHeightDp = 180
+    private val overlayHeightPx: Int
+        get() = (overlayHeightDp * context.resources.displayMetrics.density).toInt()
+
     private val layoutParams: WindowManager.LayoutParams
         get() {
-            val displayMetrics = context.resources.displayMetrics
-            val width = (displayMetrics.widthPixels * 0.80).toInt()
+            val widthDp = 42
+            val widthPx = (widthDp * context.resources.displayMetrics.density).toInt()
+            val heightPx = overlayHeightPx
 
             return WindowManager.LayoutParams(
-                width,
-                WindowManager.LayoutParams.WRAP_CONTENT,
+                widthPx,
+                heightPx,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 else
@@ -41,8 +46,8 @@ class VolumeOverlay(private val context: Context) {
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT
             ).apply {
-                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                y = 80
+                gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                x = 16
             }
         }
 
@@ -53,8 +58,7 @@ class VolumeOverlay(private val context: Context) {
             if (!isShowing) {
                 val inflater = LayoutInflater.from(context)
                 overlayView = inflater.inflate(R.layout.overlay_volume, null)
-                seekBar = overlayView?.findViewById(R.id.step_progress)
-                stepText = overlayView?.findViewById(R.id.step_text)
+                volumeFill = overlayView?.findViewById(R.id.volume_fill)
 
                 try {
                     windowManager.addView(overlayView, layoutParams)
@@ -64,10 +68,11 @@ class VolumeOverlay(private val context: Context) {
                 }
             }
 
-            // Update slider and text — no re-animation if already showing
-            seekBar?.max = totalSteps
-            seekBar?.progress = currentStep
-            stepText?.text = "$currentStep/$totalSteps"
+            // Set fill height based on volume percentage
+            val fraction = if (totalSteps > 0) currentStep.toFloat() / totalSteps else 0f
+            val fillHeight = (overlayHeightPx * fraction).toInt()
+            volumeFill?.layoutParams?.height = fillHeight
+            volumeFill?.requestLayout()
 
             hideRunnable = Runnable { hide() }
             handler.postDelayed(hideRunnable!!, SHOW_DURATION_MS)
@@ -81,8 +86,7 @@ class VolumeOverlay(private val context: Context) {
                     windowManager.removeView(overlayView)
                 } catch (_: Exception) {}
                 overlayView = null
-                seekBar = null
-                stepText = null
+                volumeFill = null
                 isShowing = false
             }
         }
