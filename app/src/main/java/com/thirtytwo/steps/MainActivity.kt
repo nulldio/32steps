@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                     stepsInput.setSelection(4)
                     return
                 }
-                if (raw >= 2) {
+                if (raw >= 1) {
                     prefs.totalSteps = raw.coerceIn(2, 1000)
                     volumeController.syncFromSystem()
                     updateVolumeBar()
