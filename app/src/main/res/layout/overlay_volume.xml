@@ -42,8 +42,8 @@
     <SeekBar
         android:id="@+id/step_progress"
         android:layout_width="match_parent"
-        android:paddingStart="0dp"
-        android:paddingEnd="0dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
         android:layout_height="wrap_content"
         android:max="32"
         android:progress="16"
