@@ -15,94 +15,155 @@
     android:paddingTop="48dp"
     android:paddingBottom="32dp">
 
-    <!-- Volume card - hero element -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Volume"
+        android:textColor="?colorOnSurface"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="6dp" />
+
+    <!-- Volume control card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="?colorSurfaceVariant"
-        app:cardCornerRadius="28dp"
+        app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="22dp">
 
-            <!-- Volume counter large -->
-            <TextView
-                android:id="@+id/volume_counter"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="0/32"
-                android:textColor="?colorOnSurface"
-                android:textSize="48sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-light"
-                android:textAlignment="center"
-                android:layout_marginBottom="24dp"
-                android:layout_marginTop="16dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_music"
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="Volume"
+                    app:tint="?colorOnSurface" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Media"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/volume_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0/32"
+                    android:textColor="?colorOnSurfaceVariant"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
 
             <SeekBar
                 android:id="@+id/volume_seekbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
                 android:max="32"
                 android:progress="0"
                 android:progressTint="?colorOnSurface"
                 android:thumbTint="?colorOnSurface"
-                android:progressBackgroundTint="?colorOnSurfaceVariant"
-                android:layout_marginBottom="8dp" />
+                android:progressBackgroundTint="?colorOnSurfaceVariant" />
 
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Steps picker -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Steps"
+        android:textColor="?colorOnSurface"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="6dp" />
+
+    <!-- Steps input card -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="?colorSurfaceVariant"
-        app:cardCornerRadius="28dp"
+        app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="24dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="22dp"
+            android:paddingEnd="22dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="Steps"
-                android:textColor="?colorOnSurfaceVariant"
-                android:textSize="13sp"
-                android:textAlignment="center"
-                android:layout_marginBottom="4dp" />
+                android:textColor="?colorOnSurface"
+                android:textSize="15sp" />
 
-            <NumberPicker
-                android:id="@+id/steps_picker"
-                android:layout_width="match_parent"
-                android:layout_height="140dp"
-                android:layout_gravity="center"
-                android:theme="@style/StepsPicker" />
+            <EditText
+                android:id="@+id/steps_input"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:maxLength="4"
+                android:textColor="?colorOnSurface"
+                android:textColorHint="?colorOnSurfaceVariant"
+                android:hint="32"
+                android:background="@android:color/transparent"
+                android:textSize="15sp"
+                android:textAlignment="textEnd"
+                android:minWidth="48dp" />
 
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Status card (hidden when setup complete) -->
+    <TextView
+        android:id="@+id/permissions_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Permissions"
+        android:textColor="?colorOnSurface"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="6dp" />
+
+    <!-- Status card -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/status_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="?colorSurfaceVariant"
-        app:cardCornerRadius="28dp"
+        app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
         android:layout_marginBottom="12dp">
@@ -112,20 +173,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="?colorOnSurface"
-            android:textSize="13sp"
-            android:lineSpacingExtra="6dp"
+            android:textSize="15sp"
+            android:lineSpacingExtra="10dp"
             android:padding="22dp" />
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Setup button (hidden when setup complete) -->
+    <!-- Setup button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_setup"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:text="Set up"
         android:textSize="15sp"
-        app:cornerRadius="28dp" />
+        app:cornerRadius="24dp" />
 
 </LinearLayout>
 </ScrollView>

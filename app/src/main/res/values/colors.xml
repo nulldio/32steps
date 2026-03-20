@@ -6,4 +6,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#FFAAAAAA</color>
     <color name="icon_background">#FF000000</color>
+    <color name="overlay_text">#FF1C1C1E</color>
+    <color name="overlay_text_secondary">#FF8E8E93</color>
 </resources>
