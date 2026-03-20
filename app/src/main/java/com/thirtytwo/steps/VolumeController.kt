@@ -161,6 +161,23 @@ class VolumeController(private val context: Context) {
         currentStep = newStep
         val stream = activeStream()
 
+        // 1 step = simple mute/max toggle
+        if (totalSteps == 1) {
+            selfChanging = true
+            if (newStep == 0) {
+                audioManager.setStreamVolume(stream, 0, 0)
+                lastSystemVol = 0
+            } else {
+                val max = audioManager.getStreamMaxVolume(stream)
+                audioManager.setStreamVolume(stream, max, 0)
+                lastSystemVol = max
+            }
+            selfChanging = false
+            setAllGain(0)
+            notifyStepChanged(newStep, totalSteps)
+            return
+        }
+
         if (newStep == 0) {
             selfChanging = true
             audioManager.setStreamVolume(stream, 0, 0)
