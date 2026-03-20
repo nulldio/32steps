@@ -50,6 +50,13 @@ class MainActivity : AppCompatActivity() {
         stepsInput.filters = arrayOf(android.text.InputFilter.LengthFilter(4))
         updateVolumeBar()
 
+        // Tap anywhere on the card to focus the input
+        findViewById<android.view.View>(R.id.steps_card).setOnClickListener {
+            stepsInput.requestFocus()
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.showSoftInput(stepsInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }
+
         stepsInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
