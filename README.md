@@ -6,7 +6,7 @@ Override Android's default 15 volume steps. Set your own custom step count (2–
 
 Android limits media volume to ~15 steps. 32steps splits each system step into smaller sub-steps using audio effects (DynamicsProcessing or Equalizer), giving you real, audible volume changes on every button press.
 
-Works system-wide — YouTube, Spotify, games, everything.
+Works system-wide. YouTube, Spotify, games, everything.
 
 ## Setup
 
@@ -21,15 +21,15 @@ Works system-wide — YouTube, Spotify, games, everything.
 - **Overlay** — shows volume popup when you change volume
 - **No internet** — the app can't send or receive any data
 
-## Building
+## Download
 
-Open the project in Android Studio and build the APK:
+Grab the latest APK from the [Releases](https://github.com/nulldio/32steps/releases) page.
 
-**Build → Generate App Bundles or APKs → Build APK**
+## Building from source
 
-APK output: `app/build/outputs/apk/debug/app-debug.apk`
-
-For a signed release build, see [Android docs on app signing](https://developer.android.com/studio/publish/app-signing).
+1. Open the project in Android Studio
+2. **Build → Select Build Variant → release**
+3. **Build → Generate App Bundles or APKs → Build APK**
 
 ## License
 
