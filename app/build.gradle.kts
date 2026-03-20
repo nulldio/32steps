@@ -15,12 +15,14 @@ android {
         versionName = "1.0"
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("../release-key.jks")
-            storePassword = "32steps123"
-            keyAlias = "32steps"
-            keyPassword = "32steps123"
+    if (file("../release-key.jks").exists()) {
+        signingConfigs {
+            create("release") {
+                storeFile = file("../release-key.jks")
+                storePassword = "32steps123"
+                keyAlias = "32steps"
+                keyPassword = "32steps123"
+            }
         }
     }
 
@@ -32,7 +34,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (file("../release-key.jks").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
