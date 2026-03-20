@@ -288,10 +288,18 @@ class VolumeController(private val context: Context) {
         lastSystemVol = sysVol
         if (sysVol == 0) {
             currentStep = 0
+            setAllGain(0)
             return
         }
         val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
         currentStep = (1 + fraction * (totalSteps - 1)).roundToInt().coerceIn(0, totalSteps)
+        // Apply the correct volume mapping for the current step
+        val (targetSysVol, gainOffset) = computeMapping(currentStep)
+        selfChanging = true
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetSysVol, 0)
+        lastSystemVol = targetSysVol
+        selfChanging = false
+        setAllGain(gainOffset)
     }
 
     fun release() {
