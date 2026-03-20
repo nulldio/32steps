@@ -114,8 +114,13 @@ class MainActivity : AppCompatActivity() {
     private fun nextMissingPermission(): Permission? {
         if (!isAccessibilityEnabled()) return Permission.ACCESSIBILITY
         if (!Settings.canDrawOverlays(this)) return Permission.OVERLAY
-        if (!prefs.batterySetupDone) return Permission.BATTERY
+        if (!isBatteryOptimizationDisabled() && !prefs.batterySetupDone) return Permission.BATTERY
         return null
+    }
+
+    private fun isBatteryOptimizationDisabled(): Boolean {
+        val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        return pm.isIgnoringBatteryOptimizations(packageName)
     }
 
     private fun openNextSetupStep() {
