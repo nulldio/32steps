@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
                 if (raw >= 1) {
-                    prefs.totalSteps = raw.coerceIn(2, 1000)
+                    prefs.totalSteps = raw.coerceIn(1, 1000)
                     volumeController.syncFromSystem()
                     updateVolumeBar()
                 }
