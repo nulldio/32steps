@@ -10,7 +10,7 @@ class PrefsManager(context: Context) {
 
     var totalSteps: Int
         get() = prefs.getInt(KEY_TOTAL_STEPS, DEFAULT_STEPS)
-        set(value) = prefs.edit().putInt(KEY_TOTAL_STEPS, value.coerceIn(2, 1000)).apply()
+        set(value) = prefs.edit().putInt(KEY_TOTAL_STEPS, value.coerceIn(1, 1000)).apply()
 
     var currentStep: Int
         get() = prefs.getInt(KEY_CURRENT_STEP, 0)

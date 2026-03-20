@@ -1,11 +1,11 @@
-Override Android's default 15 volume steps. Set your own custom step count from 2 to 1000. No root required.
+Override Android's default 15 volume steps. Set your own custom step count from 1 to 1000. No root required.
 
 32steps splits each system volume step into smaller sub-steps using audio effects, giving you real, audible volume changes on every button press.
 
 Works system-wide. YouTube, Spotify, games, everything.
 
 Features:
-- Custom volume step count (2-1000)
+- Custom volume step count (1-1000)
 - Works with hardware volume buttons
 - System-wide audio control
 - Volume overlay with progress bar
