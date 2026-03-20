@@ -185,16 +185,25 @@ class VolumeController(private val context: Context) {
         val currentSysVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         if (sysVol != currentSysVol) {
-            // Crossing a system step boundary — pre-attenuate to avoid pop
-            val preAttenuation = -(sysVol - currentSysVol) * mbPerSystemStep + gainOffset
-            setAllGain(preAttenuation)
+            if (currentSysVol == 0) {
+                // Coming from mute — no audio to pre-attenuate, just set directly
+                selfChanging = true
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0)
+                lastSystemVol = sysVol
+                selfChanging = false
+                setAllGain(gainOffset)
+            } else {
+                // Crossing a system step boundary — pre-attenuate to avoid pop
+                val preAttenuation = -(sysVol - currentSysVol) * mbPerSystemStep + gainOffset
+                setAllGain(preAttenuation)
 
-            selfChanging = true
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0)
-            lastSystemVol = sysVol
-            selfChanging = false
+                selfChanging = true
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, sysVol, 0)
+                lastSystemVol = sysVol
+                selfChanging = false
 
-            handler.postDelayed({ setAllGain(gainOffset) }, 15)
+                handler.postDelayed({ setAllGain(gainOffset) }, 15)
+            }
         } else {
             setAllGain(gainOffset)
             lastSystemVol = sysVol
