@@ -6,10 +6,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
-import android.widget.NumberPicker
+import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -18,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: PrefsManager
     private lateinit var statusText: TextView
-    private lateinit var stepsPicker: NumberPicker
+    private lateinit var stepsInput: EditText
     private lateinit var volumeSeekbar: SeekBar
     private lateinit var volumeCounter: TextView
     private lateinit var volumeController: VolumeController
@@ -39,27 +41,33 @@ class MainActivity : AppCompatActivity() {
         prefs = PrefsManager(this)
         volumeController = VolumeController.getInstance(this)
         statusText = findViewById(R.id.status_text)
-        stepsPicker = findViewById(R.id.steps_picker)
+        stepsInput = findViewById(R.id.steps_input)
         volumeSeekbar = findViewById(R.id.volume_seekbar)
         volumeCounter = findViewById(R.id.volume_counter)
         setupBtn = findViewById(R.id.btn_setup)
 
-        // Configure number picker
-        stepsPicker.minValue = 2
-        stepsPicker.maxValue = 1000
-        stepsPicker.value = prefs.totalSteps
-        stepsPicker.wrapSelectorWheel = false
-
-        // Show values in steps of 1
-        stepsPicker.setOnValueChangedListener { _, _, newVal ->
-            prefs.totalSteps = newVal
-            volumeController.syncFromSystem()
-            updateVolumeBar()
-        }
-
+        stepsInput.setText(prefs.totalSteps.toString())
+        stepsInput.filters = arrayOf(android.text.InputFilter.LengthFilter(4))
         updateVolumeBar()
 
-        // Seekbar for in-app volume control
+        stepsInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val raw = s?.toString()?.toIntOrNull() ?: return
+                if (raw > 1000) {
+                    stepsInput.setText("1000")
+                    stepsInput.setSelection(4)
+                    return
+                }
+                if (raw >= 2) {
+                    prefs.totalSteps = raw.coerceIn(2, 1000)
+                    volumeController.syncFromSystem()
+                    updateVolumeBar()
+                }
+            }
+        })
+
         volumeSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
@@ -71,7 +79,6 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        // Single guided setup button
         setupBtn.setOnClickListener {
             openNextSetupStep()
         }
@@ -113,33 +120,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun openNextSetupStep() {
         val next = nextMissingPermission()
-        if (next != null) {
-            openPermission(next)
-        }
+        if (next != null) openPermission(next)
     }
 
     private fun openPermission(permission: Permission) {
         pendingSetup = true
         when (permission) {
-            Permission.ACCESSIBILITY -> {
+            Permission.ACCESSIBILITY ->
                 startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            }
-            Permission.OVERLAY -> {
+            Permission.OVERLAY ->
                 startActivity(Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:$packageName")
                 ))
-            }
             Permission.BATTERY -> {
                 prefs.batterySetupDone = true
                 try {
-                    val intent = Intent().apply {
+                    startActivity(Intent().apply {
                         component = android.content.ComponentName(
                             "com.huawei.systemmanager",
                             "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
                         )
-                    }
-                    startActivity(intent)
+                    })
                 } catch (_: Exception) {
                     try {
                         startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
@@ -162,21 +164,23 @@ class MainActivity : AppCompatActivity() {
     private fun updateStatus() {
         val accessibilityOk = isAccessibilityEnabled()
         val overlayOk = Settings.canDrawOverlays(this)
-
         val next = nextMissingPermission()
 
         if (next == null) {
+            findViewById<View>(R.id.permissions_title).visibility = View.GONE
             findViewById<View>(R.id.status_card).visibility = View.GONE
             setupBtn.visibility = View.GONE
         } else {
+            findViewById<View>(R.id.permissions_title).visibility = View.VISIBLE
             findViewById<View>(R.id.status_card).visibility = View.VISIBLE
             setupBtn.visibility = View.VISIBLE
 
-            val sb = StringBuilder()
-            sb.appendLine(if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service")
-            sb.appendLine(if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission")
-            sb.appendLine(if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization")
-            statusText.text = sb.toString()
+            val lines = listOf(
+                if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service",
+                if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission",
+                if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization"
+            )
+            statusText.text = lines.joinToString("\n")
 
             setupBtn.text = when (next) {
                 Permission.ACCESSIBILITY -> "Enable Accessibility Service"
