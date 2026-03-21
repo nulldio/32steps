@@ -1,15 +1,19 @@
 package com.thirtytwo.steps
 
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.text.Editable
+import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.View
 import android.view.accessibility.AccessibilityManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.SeekBar
@@ -19,12 +23,13 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: PrefsManager
-    private lateinit var statusText: TextView
+    private lateinit var volumeController: VolumeController
     private lateinit var stepsInput: EditText
     private lateinit var volumeSeekbar: SeekBar
     private lateinit var volumeCounter: TextView
-    private lateinit var volumeController: VolumeController
+    private lateinit var statusText: TextView
     private lateinit var setupBtn: Button
+    private var pendingSetup = false
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         runOnUiThread {
@@ -40,70 +45,16 @@ class MainActivity : AppCompatActivity() {
 
         prefs = PrefsManager(this)
         volumeController = VolumeController.getInstance(this)
-        statusText = findViewById(R.id.status_text)
         stepsInput = findViewById(R.id.steps_input)
         volumeSeekbar = findViewById(R.id.volume_seekbar)
         volumeCounter = findViewById(R.id.volume_counter)
+        statusText = findViewById(R.id.status_text)
         setupBtn = findViewById(R.id.btn_setup)
 
-        stepsInput.setText(prefs.totalSteps.toString())
-        stepsInput.filters = arrayOf(android.text.InputFilter.LengthFilter(4))
+        setupStepsInput()
+        setupVolumeSeekbar()
+        setupBtn.setOnClickListener { openNextSetupStep() }
         updateVolumeBar()
-
-        // Tap anywhere on the card to focus the input
-        findViewById<android.view.View>(R.id.steps_card).setOnClickListener {
-            if (!stepsInput.hasFocus()) {
-                stepsInput.requestFocus()
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                imm.showSoftInput(stepsInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
-            }
-        }
-
-        // Clear field on focus, restore on unfocus if empty
-        stepsInput.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                stepsInput.setText("")
-            } else {
-                if (stepsInput.text.isNullOrEmpty()) {
-                    stepsInput.setText(prefs.totalSteps.toString())
-                }
-            }
-        }
-
-        stepsInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val text = s?.toString() ?: return
-                if (text.isEmpty()) return
-                val raw = text.toIntOrNull() ?: return
-                if (raw > 1000) {
-                    stepsInput.setText("1000")
-                    stepsInput.setSelection(4)
-                    return
-                }
-                if (raw >= 1) {
-                    prefs.totalSteps = raw.coerceIn(1, 1000)
-                    volumeController.syncFromSystem()
-                    updateVolumeBar()
-                }
-            }
-        })
-
-        volumeSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    volumeController.setStep(progress)
-                    volumeCounter.text = "$progress/${prefs.totalSteps}"
-                }
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-        setupBtn.setOnClickListener {
-            openNextSetupStep()
-        }
     }
 
     override fun onResume() {
@@ -116,9 +67,8 @@ class MainActivity : AppCompatActivity() {
 
         if (pendingSetup) {
             pendingSetup = false
-            val next = nextMissingPermission()
-            if (next != null) {
-                setupBtn.postDelayed({ openPermission(next) }, 400)
+            nextMissingPermission()?.let {
+                setupBtn.postDelayed({ openPermission(it) }, 400)
             }
         }
     }
@@ -129,25 +79,86 @@ class MainActivity : AppCompatActivity() {
         volumeController.removeStepListener(stepListener)
     }
 
-    private var pendingSetup = false
+    // Steps input
+
+    private fun setupStepsInput() {
+        stepsInput.setText(prefs.totalSteps.toString())
+        stepsInput.filters = arrayOf(InputFilter.LengthFilter(4))
+
+        findViewById<View>(R.id.steps_card).setOnClickListener {
+            if (!stepsInput.hasFocus()) {
+                stepsInput.requestFocus()
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(stepsInput, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+
+        stepsInput.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                stepsInput.setText("")
+            } else if (stepsInput.text.isNullOrEmpty()) {
+                stepsInput.setText(prefs.totalSteps.toString())
+            }
+        }
+
+        stepsInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val text = s?.toString()?.takeIf { it.isNotEmpty() } ?: return
+                val raw = text.toIntOrNull() ?: return
+                if (raw > 1000) {
+                    stepsInput.setText("1000")
+                    stepsInput.setSelection(4)
+                    return
+                }
+                if (raw >= 1) {
+                    prefs.totalSteps = raw
+                    volumeController.syncFromSystem()
+                    updateVolumeBar()
+                }
+            }
+        })
+    }
+
+    // Volume seekbar
+
+    private fun setupVolumeSeekbar() {
+        volumeSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    volumeController.setStep(progress)
+                    volumeCounter.text = "$progress/${prefs.totalSteps}"
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
+
+    private fun updateVolumeBar() {
+        val total = prefs.totalSteps
+        val current = volumeController.currentStep
+        volumeSeekbar.max = total
+        volumeSeekbar.progress = current
+        volumeCounter.text = "$current/$total"
+    }
+
+    // Permission setup
 
     private enum class Permission { ACCESSIBILITY, OVERLAY, BATTERY }
 
     private fun nextMissingPermission(): Permission? {
         if (!isAccessibilityEnabled()) return Permission.ACCESSIBILITY
         if (!Settings.canDrawOverlays(this)) return Permission.OVERLAY
-        if (!isBatteryOptimizationDisabled() && !prefs.batterySetupDone) return Permission.BATTERY
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName) && !prefs.batterySetupDone)
+            return Permission.BATTERY
         return null
     }
 
-    private fun isBatteryOptimizationDisabled(): Boolean {
-        val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-        return pm.isIgnoringBatteryOptimizations(packageName)
-    }
-
     private fun openNextSetupStep() {
-        val next = nextMissingPermission()
-        if (next != null) openPermission(next)
+        nextMissingPermission()?.let { openPermission(it) }
     }
 
     private fun openPermission(permission: Permission) {
@@ -164,7 +175,7 @@ class MainActivity : AppCompatActivity() {
                 prefs.batterySetupDone = true
                 try {
                     startActivity(Intent().apply {
-                        component = android.content.ComponentName(
+                        component = ComponentName(
                             "com.huawei.systemmanager",
                             "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
                         )
@@ -180,48 +191,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateVolumeBar() {
-        val total = prefs.totalSteps
-        val current = volumeController.currentStep
-        volumeSeekbar.max = total
-        volumeSeekbar.progress = current
-        volumeCounter.text = "$current/$total"
-    }
-
     private fun updateStatus() {
-        val accessibilityOk = isAccessibilityEnabled()
-        val overlayOk = Settings.canDrawOverlays(this)
         val next = nextMissingPermission()
 
         if (next == null) {
             findViewById<View>(R.id.permissions_title).visibility = View.GONE
             findViewById<View>(R.id.status_card).visibility = View.GONE
             setupBtn.visibility = View.GONE
-        } else {
-            findViewById<View>(R.id.permissions_title).visibility = View.VISIBLE
-            findViewById<View>(R.id.status_card).visibility = View.VISIBLE
-            setupBtn.visibility = View.VISIBLE
+            return
+        }
 
-            val lines = listOf(
-                if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service",
-                if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission",
-                if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization"
-            )
-            statusText.text = lines.joinToString("\n")
+        findViewById<View>(R.id.permissions_title).visibility = View.VISIBLE
+        findViewById<View>(R.id.status_card).visibility = View.VISIBLE
+        setupBtn.visibility = View.VISIBLE
 
-            setupBtn.text = when (next) {
-                Permission.ACCESSIBILITY -> "Enable Accessibility Service"
-                Permission.OVERLAY -> "Grant Overlay Permission"
-                Permission.BATTERY -> "Disable Battery Optimization"
-            }
+        val accessibilityOk = isAccessibilityEnabled()
+        val overlayOk = Settings.canDrawOverlays(this)
+        statusText.text = listOf(
+            if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service",
+            if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission",
+            if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization"
+        ).joinToString("\n")
+
+        setupBtn.text = when (next) {
+            Permission.ACCESSIBILITY -> "Enable Accessibility Service"
+            Permission.OVERLAY -> "Grant Overlay Permission"
+            Permission.BATTERY -> "Disable Battery Optimization"
         }
     }
 
     private fun isAccessibilityEnabled(): Boolean {
         val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
-        return enabled.any {
-            it.resolveInfo.serviceInfo.packageName == packageName
-        }
+        return am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
+            .any { it.resolveInfo.serviceInfo.packageName == packageName }
     }
 }
