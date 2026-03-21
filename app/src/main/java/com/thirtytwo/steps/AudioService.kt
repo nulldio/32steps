@@ -5,7 +5,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
 
 class AudioService : Service() {
@@ -72,7 +74,8 @@ class AudioService : Service() {
             setShowBadge(false)
             setSound(null, null)
         }
-        val nm = getSystemService(NotificationManager::class.java)
+        val nm = if (Build.VERSION.SDK_INT >= 28) getSystemService(NotificationManager::class.java)
+            else getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(channel)
     }
 
@@ -99,7 +102,8 @@ class AudioService : Service() {
     }
 
     private fun updateNotification(step: Int, total: Int) {
-        val nm = getSystemService(NotificationManager::class.java)
+        val nm = if (Build.VERSION.SDK_INT >= 28) getSystemService(NotificationManager::class.java)
+            else getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NOTIFICATION_ID, buildNotification(step, total))
     }
 

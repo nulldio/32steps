@@ -13,6 +13,6 @@ Features:
 - No internet permission
 - No ads, no tracking
 
-Requires Android 9+.
+Requires Android 8+.
 
 Note: On Android 13+, you may need to allow restricted settings first. Go to Settings > Apps > 32steps, tap the three dots, then tap Allow restricted settings.
