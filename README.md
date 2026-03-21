@@ -11,9 +11,9 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
 
 ## How it works
 
-Android limits media volume to a small number of steps (usually 15-25). 32steps splits each system step into smaller sub-steps using audio effects, giving you finer volume control on every button press.
+Android limits media volume to 15-25 steps depending on the device. Each step is about 3dB apart. 32steps splits each gap into smaller sub-steps by combining the system volume with a gain offset applied through Android's DynamicsProcessing API (falls back to Equalizer on older devices). This is just a simple volume adjustment, same thing your phone does internally. No audio processing, no filtering, no quality loss.
 
-Works system-wide. YouTube, Spotify, games, everything.
+An accessibility service intercepts your volume buttons, and a foreground service keeps the gain adjustment active in the background. Works system-wide. YouTube, Spotify, games, everything.
 
 ## Setup
 
