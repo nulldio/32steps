@@ -13,6 +13,10 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
 
 Android defaults to 15-25 volume steps. 32steps lets you set your own count by splitting each system step into smaller sub-steps using a gain offset through Android's DynamicsProcessing API (falls back to Equalizer on older devices). An accessibility service intercepts your volume buttons, and a foreground service keeps it running in the background. Works across all apps.
 
+## Requirements
+
+- Android 9+
+
 ## Setup
 
 1. Install the APK
