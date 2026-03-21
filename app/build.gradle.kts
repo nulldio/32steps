@@ -16,12 +16,16 @@ android {
     }
 
     if (file("../release-key.jks").exists()) {
+        val props = java.util.Properties()
+        val localProps = file("../local.properties")
+        if (localProps.exists()) props.load(localProps.inputStream())
+
         signingConfigs {
             create("release") {
                 storeFile = file("../release-key.jks")
-                storePassword = "32steps123"
-                keyAlias = "32steps"
-                keyPassword = "32steps123"
+                storePassword = props.getProperty("STORE_PASSWORD", "")
+                keyAlias = props.getProperty("KEY_ALIAS", "")
+                keyPassword = props.getProperty("KEY_PASSWORD", "")
             }
         }
     }
