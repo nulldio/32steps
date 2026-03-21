@@ -12,3 +12,5 @@ Features:
 - No root required
 - No internet permission
 - No ads, no tracking
+
+Note: On Android 13+, you may need to allow restricted settings first. Go to Settings > Apps > 32steps, tap the three dots, then tap Allow restricted settings.
