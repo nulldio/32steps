@@ -1,0 +1,1 @@
+Hide text cursor in step input.
