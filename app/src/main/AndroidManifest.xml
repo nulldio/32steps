@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
@@ -47,7 +47,7 @@
 
         <receiver
             android:name=".BootReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -55,7 +55,7 @@
 
         <receiver
             android:name=".AudioSessionReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.media.action.OPEN_AUDIO_EFFECT_CONTROL_SESSION" />
                 <action android:name="android.media.action.CLOSE_AUDIO_EFFECT_CONTROL_SESSION" />
