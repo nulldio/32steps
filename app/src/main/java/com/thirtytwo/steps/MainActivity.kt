@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         stepsInput.filters = arrayOf(android.text.InputFilter.LengthFilter(4))
         updateVolumeBar()
 
-        // Tap anywhere on the card to focus the input - only if not already focused
+        // Tap anywhere on the card to focus the input
         findViewById<android.view.View>(R.id.steps_card).setOnClickListener {
             if (!stepsInput.hasFocus()) {
                 stepsInput.requestFocus()
@@ -59,18 +59,31 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Clear field on focus, restore on unfocus if empty
+        stepsInput.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                stepsInput.setText("")
+            } else {
+                if (stepsInput.text.isNullOrEmpty()) {
+                    stepsInput.setText(prefs.totalSteps.toString())
+                }
+            }
+        }
+
         stepsInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                val raw = s?.toString()?.toIntOrNull() ?: return
+                val text = s?.toString() ?: return
+                if (text.isEmpty()) return
+                val raw = text.toIntOrNull() ?: return
                 if (raw > 1000) {
                     stepsInput.setText("1000")
                     stepsInput.setSelection(4)
                     return
                 }
-                if (raw >= 1) {
-                    prefs.totalSteps = raw.coerceIn(1, 1000)
+                if (raw >= 2) {
+                    prefs.totalSteps = raw.coerceIn(2, 1000)
                     volumeController.syncFromSystem()
                     updateVolumeBar()
                 }

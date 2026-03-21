@@ -145,8 +145,7 @@
                 android:background="@android:color/transparent"
                 android:textSize="15sp"
                 android:gravity="end"
-                android:cursorVisible="false"
-                android:selectAllOnFocus="true" />
+                android:cursorVisible="false" />
 
         </LinearLayout>
 
