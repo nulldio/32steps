@@ -11,7 +11,7 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
 
 ## How it works
 
-Android defaults to 15 volume steps (can vary by device). 32steps works on all devices regardless. Each step is about 3dB apart. 32steps splits each gap into smaller sub-steps by combining the system volume with a gain offset applied through Android's DynamicsProcessing API (falls back to Equalizer on older devices). An accessibility service intercepts your volume buttons, and a foreground service keeps the gain adjustment active in the background. Works across all apps.
+Android defaults to 15-25 volume steps. 32steps lets you set your own count by splitting each system step into smaller sub-steps using a gain offset through Android's DynamicsProcessing API (falls back to Equalizer on older devices). An accessibility service intercepts your volume buttons, and a foreground service keeps it running in the background. Works across all apps.
 
 ## Setup
 
