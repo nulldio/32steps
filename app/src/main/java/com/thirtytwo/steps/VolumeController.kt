@@ -305,8 +305,8 @@ class VolumeController(private val context: Context) {
         val avgDbPerStep = totalDb / (systemMax - 1)
         val avgMbPerStep = (avgDbPerStep * 100).toInt()
 
-        // Clamp to sane range (150-500 mB)
-        return avgMbPerStep.coerceIn(150, 500)
+        if (avgMbPerStep <= 0) return 300
+        return avgMbPerStep
     }
 
     fun syncFromSystem() {
