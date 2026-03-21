@@ -13,8 +13,8 @@ android {
         applicationId = "com.thirtytwo.steps"
         minSdk = 28
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
     }
 
     if (file("../release-key.jks").exists()) {
