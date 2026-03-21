@@ -1,1 +1,1 @@
-Support Android 8+. Fix minimum step count.
+Support Android 8+.
