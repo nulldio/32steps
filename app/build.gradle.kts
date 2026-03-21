@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -16,7 +18,7 @@ android {
     }
 
     if (file("../release-key.jks").exists()) {
-        val props = java.util.Properties()
+        val props = Properties()
         val localProps = file("../local.properties")
         if (localProps.exists()) props.load(localProps.inputStream())
 
