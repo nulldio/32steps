@@ -202,7 +202,8 @@ class VolumeController(private val context: Context) {
         val currentSysVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         if (sysVol != currentSysVol) {
-            if (currentSysVol == 0 || totalSteps <= 1) {
+            val bigJump = kotlin.math.abs(sysVol - currentSysVol) > 2
+            if (currentSysVol == 0 || totalSteps <= 1 || bigJump) {
                 // From mute or single step — set directly, no smoothing needed
                 setAllGain(gainOffset)
                 selfChanging = true
@@ -234,8 +235,7 @@ class VolumeController(private val context: Context) {
      * System volume is the ceiling; gain offset attenuates the remainder.
      */
     private fun computeMapping(step: Int): Pair<Int, Int> {
-        val fraction = if (totalSteps <= 1) 1f
-            else (step - 1).toFloat() / (totalSteps - 1)
+        val fraction = step.toFloat() / totalSteps
         val floatSysVol = 1 + fraction * (systemMax - 1)
         val sysVol = ceil(floatSysVol).toInt().coerceIn(1, systemMax)
         val attenuation = sysVol - floatSysVol
@@ -318,7 +318,7 @@ class VolumeController(private val context: Context) {
             return
         }
         val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
-        currentStep = (1 + fraction * (totalSteps - 1)).roundToInt().coerceIn(0, totalSteps)
+        currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
         // Apply the correct volume mapping for the current step
         val (targetSysVol, gainOffset) = computeMapping(currentStep)
         selfChanging = true
