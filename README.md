@@ -15,7 +15,7 @@ Android defaults to 15-25 volume steps. 32steps lets you set your own count by s
 
 ## Requirements
 
-- Android 9+
+- Android 8+
 
 ## Setup
 
