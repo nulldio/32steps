@@ -1,0 +1,140 @@
+name: Update Headphone Profiles
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6am UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone AutoEQ
+        run: git clone --depth=1 https://github.com/jaakkopasanen/AutoEq.git /tmp/AutoEq
+
+      - name: Generate headphone database
+        run: |
+          python3 -c "
+          import os, json, gzip
+
+          profiles = []
+          seen = set()
+          for root, dirs, files in os.walk('/tmp/AutoEq/results'):
+              for f in files:
+                  if f.endswith('FixedBandEQ.txt'):
+                      name = f.replace(' FixedBandEQ.txt', '')
+                      path = os.path.join(root, f)
+                      cat = 'other'
+                      if '/in-ear/' in root: cat = 'iem'
+                      elif '/over-ear/' in root: cat = 'over'
+                      elif '/earbud/' in root: cat = 'bud'
+
+                      key = name.lower()
+                      if key in seen: continue
+                      seen.add(key)
+
+                      with open(path) as fp:
+                          lines = fp.readlines()
+
+                      preamp = 0
+                      bands = []
+                      for line in lines:
+                          if 'Preamp' in line:
+                              preamp = float(line.split(':')[1].strip().replace(' dB',''))
+                          elif 'Filter' in line and 'Fc' in line:
+                              parts = line.split()
+                              fc_idx = parts.index('Fc') + 1
+                              gain_idx = parts.index('Gain') + 1
+                              fc = int(parts[fc_idx])
+                              gain = float(parts[gain_idx])
+                              bands.append([fc, gain])
+
+                      if bands:
+                          profiles.append({'n': name, 'c': cat, 'p': preamp, 'b': bands})
+
+          profiles.sort(key=lambda x: x['n'].lower())
+          data = json.dumps(profiles, separators=(',',':'))
+
+          with gzip.open('app/src/main/assets/headphones.dat', 'wb') as f:
+              f.write(data.encode())
+
+          print(f'Generated {len(profiles)} profiles')
+          "
+
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet app/src/main/assets/headphones.dat; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version and build
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          # Read current version
+          CURRENT_CODE=$(grep "versionCode" app/build.gradle.kts | grep -o '[0-9]*')
+          CURRENT_NAME=$(grep "versionName" app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"')
+          NEW_CODE=$((CURRENT_CODE + 1))
+          MAJOR=$(echo "$CURRENT_NAME" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT_NAME" | cut -d. -f2)
+          NEW_NAME="$MAJOR.$((MINOR + 1))"
+
+          sed -i "s/versionCode = $CURRENT_CODE/versionCode = $NEW_CODE/" app/build.gradle.kts
+          sed -i "s/versionName = \"$CURRENT_NAME\"/versionName = \"$NEW_NAME\"/" app/build.gradle.kts
+
+          echo "Updated headphone profiles." > "fastlane/metadata/android/en-US/changelogs/$NEW_CODE.txt"
+
+          echo "NEW_NAME=$NEW_NAME" >> $GITHUB_ENV
+          echo "NEW_CODE=$NEW_CODE" >> $GITHUB_ENV
+
+      - name: Set up JDK
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        if: steps.check.outputs.changed == 'true'
+        uses: android-actions/setup-android@v3
+
+      - name: Decode keystore
+        if: steps.check.outputs.changed == 'true'
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release-key.jks
+
+      - name: Create local.properties
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}" > local.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> local.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> local.properties
+
+      - name: Build release APK
+        if: steps.check.outputs.changed == 'true'
+        run: chmod +x gradlew && ./gradlew assembleRelease
+
+      - name: Commit, tag, release
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "nulldio"
+          git config user.email "pengooz@proton.me"
+          git add -A
+          git commit -m "v$NEW_NAME - Updated headphone profiles"
+          git tag "v$NEW_NAME"
+          git push origin main
+          git push origin "v$NEW_NAME"
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NEW_NAME }}
+          name: v${{ env.NEW_NAME }}
+          body: Updated headphone profiles.
+          files: app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
