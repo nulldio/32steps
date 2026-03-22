@@ -1,0 +1,1 @@
+Fix sound profiles not applying EQ corrections.
