@@ -86,11 +86,18 @@ class SoundProfileManager(private val context: Context) {
             eq.enabled = true
 
             val numBands = eq.numberOfBands.toInt()
-            for (i in 0 until numBands.coerceAtMost(profile.bands.size)) {
-                val (_, gain) = profile.bands[i]
-                val totalGain = (gain * 100).toInt()
-                val range = eq.bandLevelRange
-                val clamped = totalGain.toShort().coerceIn(range[0], range[1])
+            val range = eq.bandLevelRange
+
+            // Map AutoEQ band gains to Android's actual band center frequencies
+            for (i in 0 until numBands) {
+                val centerFreq = eq.getCenterFreq(i.toShort()) / 1000 // milliHz to Hz
+                // Find closest AutoEQ band by frequency
+                val closest = profile.bands.minByOrNull {
+                    kotlin.math.abs(it.first - centerFreq)
+                }
+                val gain = closest?.second ?: 0f
+                val gainMb = (gain * 100).toInt()
+                val clamped = gainMb.toShort().coerceIn(range[0], range[1])
                 eq.setBandLevel(i.toShort(), clamped)
             }
 
