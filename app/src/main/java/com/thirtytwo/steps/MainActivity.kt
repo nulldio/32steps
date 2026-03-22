@@ -335,17 +335,25 @@ class MainActivity : AppCompatActivity() {
             Permission.BATTERY -> {
                 prefs.batterySetupDone = true
                 try {
-                    startActivity(Intent().apply {
-                        component = ComponentName(
-                            "com.huawei.systemmanager",
-                            "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
-                        )
-                    })
+                    // Direct popup asking to exempt this app
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    intent.data = Uri.parse("package:$packageName")
+                    startActivity(intent)
                 } catch (_: Exception) {
+                    // Fallback: Huawei-specific settings
                     try {
-                        startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                        startActivity(Intent().apply {
+                            component = ComponentName(
+                                "com.huawei.systemmanager",
+                                "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
+                            )
+                        })
                     } catch (_: Exception) {
-                        startActivity(Intent(Settings.ACTION_SETTINGS))
+                        try {
+                            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                        } catch (_: Exception) {
+                            startActivity(Intent(Settings.ACTION_SETTINGS))
+                        }
                     }
                 }
             }
