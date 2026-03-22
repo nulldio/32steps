@@ -4,45 +4,54 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="?colorSurfaceVariant"
-    app:cardCornerRadius="20dp"
+    app:cardCornerRadius="24dp"
     app:cardElevation="0dp"
     app:strokeWidth="0dp"
-    android:layout_margin="4dp">
+    android:layout_marginBottom="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="20dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <ImageView
             android:id="@+id/preset_icon"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:src="@drawable/ic_headphone"
             app:tint="?colorOnSurface"
-            android:layout_marginBottom="10dp"
+            android:layout_marginEnd="14dp"
             android:contentDescription="Headphones" />
 
-        <TextView
-            android:id="@+id/preset_name"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textColor="?colorOnSurface"
-            android:textSize="12sp"
-            android:textAlignment="center"
-            android:maxLines="2"
-            android:ellipsize="end" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/preset_steps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="?colorOnSurfaceVariant"
-            android:textSize="11sp"
-            android:textAlignment="center"
-            android:layout_marginTop="2dp" />
+            <TextView
+                android:id="@+id/preset_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?colorOnSurface"
+                android:textSize="15sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/preset_steps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?colorOnSurfaceVariant"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

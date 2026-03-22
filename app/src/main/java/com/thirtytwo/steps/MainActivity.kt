@@ -16,12 +16,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.InputMethodManager
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
-import android.widget.GridLayout
-import android.widget.ImageView
-import android.widget.ListView
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -37,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var volumeCounter: TextView
     private lateinit var statusText: TextView
     private lateinit var setupBtn: Button
-    private lateinit var presetGrid: GridLayout
+    private lateinit var presetList: LinearLayout
     private var pendingSetup = false
     private var profilesLoaded = false
 
@@ -61,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         volumeCounter = findViewById(R.id.volume_counter)
         statusText = findViewById(R.id.status_text)
         setupBtn = findViewById(R.id.btn_setup)
-        presetGrid = findViewById(R.id.preset_grid)
+        presetList = findViewById(R.id.preset_list)
 
         setupStepsInput()
         setupVolumeSeekbar()
@@ -69,9 +66,7 @@ class MainActivity : AppCompatActivity() {
         updateVolumeBar()
         loadPresetGrid()
 
-        findViewById<View>(R.id.btn_add_preset).setOnClickListener {
-            showHeadphoneSearch()
-        }
+        setupSoundProfile()
 
         // Preload profiles in background
         Thread {
@@ -170,20 +165,13 @@ class MainActivity : AppCompatActivity() {
     // Presets
 
     private fun loadPresetGrid() {
-        presetGrid.removeAllViews()
+        presetList.removeAllViews()
         val presets = prefs.getPresets()
 
         for (preset in presets) {
-            val card = layoutInflater.inflate(R.layout.item_preset, presetGrid, false)
+            val card = layoutInflater.inflate(R.layout.item_preset, presetList, false)
             card.findViewById<TextView>(R.id.preset_name).text = preset.headphoneName
             card.findViewById<TextView>(R.id.preset_steps).text = "${preset.steps} steps"
-
-            val params = GridLayout.LayoutParams().apply {
-                width = 0
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1, 1f)
-            }
-            card.layoutParams = params
 
             // Tap to apply
             card.setOnClickListener {
@@ -216,63 +204,75 @@ class MainActivity : AppCompatActivity() {
                 true
             }
 
-            presetGrid.addView(card)
+            presetList.addView(card)
         }
     }
 
-    private fun showHeadphoneSearch() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_headphone_search, null)
-        val searchInput = dialogView.findViewById<EditText>(R.id.search_input)
-        val listView = dialogView.findViewById<ListView>(R.id.search_results)
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Add headphones")
-            .setView(dialogView)
-            .setNegativeButton("Cancel", null)
-            .create()
-
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_list_item_1,
-            mutableListOf<String>()
-        )
-        listView.adapter = adapter
+    private fun setupSoundProfile() {
+        val addBtn = findViewById<View>(R.id.btn_add_preset)
+        val searchInput = findViewById<EditText>(R.id.profile_search)
+        val searchResultsView = findViewById<LinearLayout>(R.id.search_results)
         var currentResults = listOf<HeadphoneProfile>()
+
+        addBtn.setOnClickListener {
+            addBtn.visibility = View.GONE
+            searchInput.visibility = View.VISIBLE
+            searchInput.requestFocus()
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(searchInput, InputMethodManager.SHOW_IMPLICIT)
+        }
+
+        searchInput.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                searchInput.setText("")
+                searchInput.visibility = View.GONE
+                addBtn.visibility = View.VISIBLE
+                searchResultsView.visibility = View.GONE
+            }
+        }
 
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 val query = s?.toString() ?: ""
+                searchResultsView.removeAllViews()
+
                 if (query.length < 2 || !profilesLoaded) {
-                    adapter.clear()
-                    adapter.notifyDataSetChanged()
+                    searchResultsView.visibility = View.GONE
                     return
                 }
+
                 currentResults = profileManager.searchProfiles(query)
-                adapter.clear()
-                adapter.addAll(currentResults.map { it.name })
-                adapter.notifyDataSetChanged()
+                if (currentResults.isEmpty()) {
+                    searchResultsView.visibility = View.GONE
+                    return
+                }
+
+                searchResultsView.visibility = View.VISIBLE
+                for (profile in currentResults) {
+                    val item = layoutInflater.inflate(R.layout.item_preset, searchResultsView, false)
+                    item.findViewById<TextView>(R.id.preset_name).text = profile.name
+                    item.findViewById<TextView>(R.id.preset_steps).text = profile.category
+                    item.setOnClickListener {
+                        val preset = Preset(profile.name, prefs.totalSteps)
+                        prefs.addPreset(preset)
+                        prefs.soundProfile = profile.name
+                        loadPresetGrid()
+
+                        searchInput.setText("")
+                        searchInput.clearFocus()
+                        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
+
+                        val intent = Intent(this, AudioService::class.java)
+                        intent.action = AudioService.ACTION_APPLY_PROFILE
+                        startService(intent)
+                    }
+                    searchResultsView.addView(item)
+                }
             }
         })
-
-        listView.setOnItemClickListener { _, _, position, _ ->
-            if (position < currentResults.size) {
-                val profile = currentResults[position]
-                val preset = Preset(profile.name, prefs.totalSteps)
-                prefs.addPreset(preset)
-                prefs.soundProfile = profile.name
-                loadPresetGrid()
-
-                val intent = Intent(this, AudioService::class.java)
-                intent.action = AudioService.ACTION_APPLY_PROFILE
-                startService(intent)
-
-                dialog.dismiss()
-            }
-        }
-
-        dialog.show()
     }
 
     // Permission setup
