@@ -302,7 +302,34 @@ class VolumeController(private val context: Context) {
     }
 
     private fun applyDpGain(dp: DynamicsProcessing, mb: Int) {
-        try { dp.setInputGainAllChannelsTo(mb / 100f) } catch (_: Exception) {}
+        try {
+            dp.setInputGainAllChannelsTo(mb / 100f)
+        } catch (_: Exception) {
+            // Effect may have been released by system - try to re-attach
+            reattachSessions()
+        }
+    }
+
+    private var reattaching = false
+
+    private fun reattachSessions() {
+        if (reattaching) return
+        reattaching = true
+        handler.post {
+            val sessionIds = (dynamicsProcessors.keys + equalizers.keys).toSet().toList()
+            // Release effects but keep observer
+            for ((_, dp) in dynamicsProcessors) {
+                try { dp.enabled = false; dp.release() } catch (_: Exception) {}
+            }
+            for ((_, eq) in equalizers) {
+                try { eq.enabled = false; eq.release() } catch (_: Exception) {}
+            }
+            dynamicsProcessors.clear()
+            equalizers.clear()
+            // Re-attach all sessions
+            for (id in sessionIds) attachSession(id)
+            reattaching = false
+        }
     }
 
     private fun applyEqGain(eq: Equalizer, mb: Int) {
