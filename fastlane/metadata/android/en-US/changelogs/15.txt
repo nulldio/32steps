@@ -1,0 +1,1 @@
+Auto-recover audio effects when system releases them.
