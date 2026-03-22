@@ -96,8 +96,8 @@ class VolumeController(private val context: Context) {
                 val dp = DynamicsProcessing(Int.MAX_VALUE, sessionId, config)
                 dp.enabled = true
                 dynamicsProcessors[sessionId] = dp
-                applyDpGain(dp, gainOffsetForStep(currentStep))
                 applySoundProfile(dp)
+                applyDpGain(dp, gainOffsetForStep(currentStep))
                 return
             } catch (_: Exception) {
                 useDynamicsProcessing = false
@@ -247,7 +247,11 @@ class VolumeController(private val context: Context) {
 
     fun setSoundProfile(profile: HeadphoneProfile?) {
         activeProfile = profile
-        for ((_, dp) in dynamicsProcessors) applySoundProfile(dp)
+        for ((_, dp) in dynamicsProcessors) {
+            applySoundProfile(dp)
+            // Re-apply volume gain in case profile change reset it
+            applyDpGain(dp, gainOffsetForStep(currentStep))
+        }
     }
 
     private fun applySoundProfile(dp: DynamicsProcessing) {
