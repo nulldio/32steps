@@ -46,7 +46,11 @@ class AudioService : Service() {
         val sessionId = intent?.getIntExtra(EXTRA_SESSION_ID, -1) ?: -1
         if (sessionId > 0) {
             when (intent?.action) {
-                ACTION_ATTACH_SESSION -> volumeController.attachSession(sessionId)
+                ACTION_ATTACH_SESSION -> {
+                    volumeController.attachSession(sessionId)
+                    // Re-apply sound profile in case it was lost
+                    if (volumeController.hasSoundProfile().not()) applySavedProfile()
+                }
                 ACTION_DETACH_SESSION -> volumeController.detachSession(sessionId)
             }
         }
