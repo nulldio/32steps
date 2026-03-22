@@ -2,7 +2,7 @@ name: Update Headphone Profiles
 
 on:
   schedule:
-    - cron: '0 6 * * 1'  # Every Monday at 6am UTC
+    - cron: '0 6 * * *'  # Every day at 6am UTC
   workflow_dispatch:  # Manual trigger
 
 jobs:
