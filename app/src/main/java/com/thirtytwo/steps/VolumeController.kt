@@ -266,11 +266,12 @@ class VolumeController(private val context: Context) {
     @Synchronized
     fun setSoundProfile(profile: HeadphoneProfile?) {
         activeProfile = profile
-        val sessions = dynamicsProcessors.toMap() // snapshot to prevent CME (#8)
+        val sessions = dynamicsProcessors.toMap()
         for ((_, dp) in sessions) {
-            applySoundProfile(dp)
-            applyDpGain(dp, gainOffsetForStep(currentStep))
+            applySoundProfile(dp) // only touches pre-EQ bands
         }
+        // Re-apply volume gain with correct preamp compensation
+        setAllGain(gainOffsetForStep(currentStep))
     }
 
     private fun applySoundProfile(dp: DynamicsProcessing) {
@@ -289,12 +290,10 @@ class VolumeController(private val context: Context) {
                     band.gain = 0f
                     dp.setPreEqBandAllChannelsTo(i, band)
                 }
-                // Reset preamp compensation
-                dp.setInputGainAllChannelsTo(gainOffsetForStep(currentStep) / 100f)
                 return
             }
 
-            // Apply profile bands to pre-EQ
+            // Apply profile bands to pre-EQ only - inputGain handled by setAllGain
             val eqBandFreqs = intArrayOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
             for (i in 0 until 10.coerceAtMost(profile.bands.size)) {
                 val (_, gain) = profile.bands[i]
@@ -304,11 +303,6 @@ class VolumeController(private val context: Context) {
                 band.gain = gain
                 dp.setPreEqBandAllChannelsTo(i, band)
             }
-
-            // Apply preamp to compensate for EQ level changes (#9)
-            val preampMb = (profile.preamp * 100).toInt()
-            val volumeGain = gainOffsetForStep(currentStep)
-            dp.setInputGainAllChannelsTo((volumeGain + preampMb) / 100f)
 
         } catch (e: Exception) {
             // Log but don't silently swallow (#10)
