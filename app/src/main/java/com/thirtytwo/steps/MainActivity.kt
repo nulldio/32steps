@@ -14,21 +14,27 @@ import android.text.TextWatcher
 import android.view.View
 import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ListView
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: PrefsManager
     private lateinit var volumeController: VolumeController
+    private lateinit var profileManager: SoundProfileManager
     private lateinit var stepsInput: EditText
     private lateinit var volumeSeekbar: SeekBar
     private lateinit var volumeCounter: TextView
     private lateinit var statusText: TextView
     private lateinit var setupBtn: Button
+    private lateinit var profileLabel: TextView
+    private lateinit var profileClear: TextView
     private var pendingSetup = false
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
@@ -45,14 +51,18 @@ class MainActivity : AppCompatActivity() {
 
         prefs = PrefsManager(this)
         volumeController = VolumeController.getInstance(this)
+        profileManager = SoundProfileManager(this)
         stepsInput = findViewById(R.id.steps_input)
         volumeSeekbar = findViewById(R.id.volume_seekbar)
         volumeCounter = findViewById(R.id.volume_counter)
         statusText = findViewById(R.id.status_text)
         setupBtn = findViewById(R.id.btn_setup)
+        profileLabel = findViewById(R.id.profile_label)
+        profileClear = findViewById(R.id.profile_clear)
 
         setupStepsInput()
         setupVolumeSeekbar()
+        setupSoundProfile()
         setupBtn.setOnClickListener { openNextSetupStep() }
         updateVolumeBar()
     }
@@ -64,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         volumeController.syncFromSystem()
         updateVolumeBar()
         updateStatus()
+        updateProfileLabel()
 
         if (pendingSetup) {
             pendingSetup = false
@@ -142,6 +153,81 @@ class MainActivity : AppCompatActivity() {
         volumeSeekbar.max = total
         volumeSeekbar.progress = current
         volumeCounter.text = "$current/$total"
+    }
+
+    // Sound profile
+
+    private fun setupSoundProfile() {
+        updateProfileLabel()
+
+        findViewById<View>(R.id.profile_card).setOnClickListener {
+            showHeadphonePicker()
+        }
+
+        profileClear.setOnClickListener {
+            prefs.soundProfile = null
+            updateProfileLabel()
+            val intent = Intent(this, AudioService::class.java)
+            intent.action = AudioService.ACTION_CLEAR_PROFILE
+            startService(intent)
+        }
+    }
+
+    private fun updateProfileLabel() {
+        val saved = prefs.soundProfile
+        if (saved != null) {
+            profileLabel.text = saved
+            profileClear.visibility = View.VISIBLE
+        } else {
+            profileLabel.text = "Select headphones"
+            profileClear.visibility = View.GONE
+        }
+    }
+
+    private fun showHeadphonePicker() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_headphone_search, null)
+        val searchInput = dialogView.findViewById<EditText>(R.id.search_input)
+        val listView = dialogView.findViewById<ListView>(R.id.search_results)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Select headphones")
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        var currentResults = profileManager.searchProfiles("")
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            currentResults.map { "${it.name} (${it.category})" }.toMutableList()
+        )
+        listView.adapter = adapter
+
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                currentResults = profileManager.searchProfiles(s?.toString() ?: "")
+                adapter.clear()
+                adapter.addAll(currentResults.map { "${it.name} (${it.category})" })
+                adapter.notifyDataSetChanged()
+            }
+        })
+
+        listView.setOnItemClickListener { _, _, position, _ ->
+            if (position < currentResults.size) {
+                val profile = currentResults[position]
+                prefs.soundProfile = profile.name
+                updateProfileLabel()
+                // Tell the service to apply the profile
+                val intent = Intent(this, AudioService::class.java)
+                intent.action = AudioService.ACTION_APPLY_PROFILE
+                startService(intent)
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
     }
 
     // Permission setup
