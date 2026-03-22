@@ -320,14 +320,11 @@ class VolumeController(private val context: Context) {
 
     @Synchronized
     private fun setAllGain(mb: Int) {
-        val preampMb = activeProfile?.let { (it.preamp * 100).toInt() } ?: 0
-        val totalGain = mb + preampMb
-
-        val dpSnapshot = dynamicsProcessors.toMap() // snapshot (#8)
-        for ((_, dp) in dpSnapshot) applyDpGain(dp, totalGain)
+        val dpSnapshot = dynamicsProcessors.toMap()
+        for ((_, dp) in dpSnapshot) applyDpGain(dp, mb)
 
         val eqSnapshot = equalizers.toMap()
-        for ((_, eq) in eqSnapshot) applyEqGain(eq, mb) // EQ path has no preamp
+        for ((_, eq) in eqSnapshot) applyEqGain(eq, mb)
     }
 
     private fun applyDpGain(dp: DynamicsProcessing, mb: Int) {
