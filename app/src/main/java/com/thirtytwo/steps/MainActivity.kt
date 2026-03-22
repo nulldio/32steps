@@ -195,7 +195,8 @@ class MainActivity : AppCompatActivity() {
                 stepsInput.setText(preset.steps.toString())
                 volumeController.syncFromSystem()
                 updateVolumeBar()
-                loadPresetGrid()
+                // Update highlights without rebuilding list
+                refreshPresetHighlights()
                 val intent = Intent(this@MainActivity, AudioService::class.java)
                 intent.action = AudioService.ACTION_APPLY_PROFILE
                 startService(intent)
@@ -221,6 +222,20 @@ class MainActivity : AppCompatActivity() {
             }
 
             presetList.addView(card)
+        }
+    }
+
+    private fun refreshPresetHighlights() {
+        val active = prefs.soundProfile
+        for (i in 0 until presetList.childCount) {
+            val card = presetList.getChildAt(i) as com.google.android.material.card.MaterialCardView
+            val name = card.findViewById<TextView>(R.id.preset_name).text.toString()
+            if (name == active) {
+                card.strokeWidth = (2 * resources.displayMetrics.density).toInt()
+                card.strokeColor = getColor(com.google.android.material.R.color.material_on_surface_emphasis_medium)
+            } else {
+                card.strokeWidth = 0
+            }
         }
     }
 
