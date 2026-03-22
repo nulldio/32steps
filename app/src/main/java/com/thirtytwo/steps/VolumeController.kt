@@ -230,8 +230,20 @@ class VolumeController(private val context: Context) {
     // Sound profile via DynamicsProcessing pre-EQ
 
     private var activeProfile: HeadphoneProfile? = null
+    private var profileManager: SoundProfileManager? = null
 
-    fun hasSoundProfile(): Boolean = activeProfile != null
+    private fun ensureProfileLoaded() {
+        if (activeProfile == null) {
+            val savedName = prefs.soundProfile ?: return
+            if (profileManager == null) profileManager = SoundProfileManager(context)
+            activeProfile = profileManager?.findProfile(savedName)
+        }
+    }
+
+    fun hasSoundProfile(): Boolean {
+        ensureProfileLoaded()
+        return activeProfile != null
+    }
 
     fun setSoundProfile(profile: HeadphoneProfile?) {
         activeProfile = profile
@@ -240,6 +252,7 @@ class VolumeController(private val context: Context) {
 
     private fun applySoundProfile(dp: DynamicsProcessing) {
         try {
+            ensureProfileLoaded()
             val profile = activeProfile
 
             // Enable/disable the pre-EQ stage on the channel
