@@ -1,6 +1,6 @@
 # 32steps
 
-Override Android's default volume steps. Set your own custom step count (1-1000). No root required.
+Override Android's default volume steps. Set your own custom step count (1-1000). No root required. Includes 6000+ headphone sound profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq), updated automatically.
 
 <p float="left">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="200" />
@@ -12,6 +12,10 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
 ## How it works
 
 Android defaults to 15-25 volume steps. 32steps lets you set your own count by splitting each system step into smaller sub-steps using a gain offset through Android's DynamicsProcessing API (falls back to Equalizer on older devices). An accessibility service intercepts your volume buttons, and a foreground service keeps it running in the background. Works across all apps.
+
+## Sound Profiles
+
+Select your headphones from 6000+ models and the app applies an EQ correction based on measured frequency response data from AutoEQ. Save multiple presets with different headphones and step counts. The headphone database is updated daily from AutoEQ via GitHub Actions.
 
 ## Requirements
 

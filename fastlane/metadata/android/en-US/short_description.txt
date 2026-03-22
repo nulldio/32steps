@@ -1,1 +1,1 @@
-Override Android's default volume steps with a custom step count
+Custom volume steps and headphone sound profiles for Android
