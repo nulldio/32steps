@@ -239,11 +239,17 @@ class VolumeController(private val context: Context) {
     private fun applySoundProfile(dp: DynamicsProcessing) {
         try {
             val profile = activeProfile
+
+            // Enable/disable the pre-EQ stage on the channel
+            val preEq = dp.getPreEqByChannelIndex(0)
+            preEq.isEnabled = profile != null
+            dp.setPreEqAllChannelsTo(preEq)
+
             if (profile == null) {
-                // Clear all pre-EQ bands
                 for (i in 0 until 10) {
                     val band = dp.getPreEqBandByChannelIndex(0, i)
                     band.isEnabled = false
+                    band.gain = 0f
                     dp.setPreEqBandAllChannelsTo(i, band)
                 }
                 return
