@@ -15,7 +15,7 @@ Android defaults to 15-25 volume steps. 32steps lets you set your own count by s
 
 ## Sound Profiles
 
-Select your headphones from 6000+ models and the app applies an EQ correction based on measured frequency response data from AutoEQ. Save multiple presets with different headphones and step counts. The headphone database is updated daily from AutoEQ via GitHub Actions.
+Pick your headphones from 6000+ models and the app corrects the sound based on measured data from AutoEQ. Save presets with different headphones and step counts. The headphone database updates automatically.
 
 ## Requirements
 
