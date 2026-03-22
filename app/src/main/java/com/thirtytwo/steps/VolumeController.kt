@@ -20,8 +20,9 @@ class VolumeController(private val context: Context) {
     private val prefs = PrefsManager(context)
     private val handler = Handler(Looper.getMainLooper())
 
-    private val dynamicsProcessors = mutableMapOf<Int, DynamicsProcessing>()
-    private val equalizers = mutableMapOf<Int, Equalizer>()
+    // Use synchronized collections to prevent ConcurrentModificationException (#8)
+    private val dynamicsProcessors = LinkedHashMap<Int, DynamicsProcessing>()
+    private val equalizers = LinkedHashMap<Int, Equalizer>()
     private var useDynamicsProcessing = true
 
     val systemMax: Int = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
@@ -33,7 +34,13 @@ class VolumeController(private val context: Context) {
 
     private val mbPerSystemStep: Int by lazy { measureMbPerStep() }
     private var lastSystemVol = -1
-    private var selfChanging = false
+
+    // Timestamp-based observer guard instead of boolean flag (#1, #3)
+    private var lastSelfChangeTime = 0L
+    private val selfChangeWindowMs = 150L
+
+    // Prevent concurrent operations (#2, #4, #7, #8)
+    private var operating = false
 
     // Listeners
 
@@ -53,15 +60,20 @@ class VolumeController(private val context: Context) {
         }
     }
 
-    // Volume observer
+    // Volume observer - uses timestamp window instead of boolean (#1, #3)
 
     private val volumeObserver = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) {
-            if (selfChanging) return
+            if (System.currentTimeMillis() - lastSelfChangeTime < selfChangeWindowMs) return
+            if (operating) return
             val sysVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
             if (sysVol != lastSystemVol) {
                 lastSystemVol = sysVol
-                syncFromSystem()
+                // Only update internal state, don't re-set system volume (#3)
+                val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
+                currentStep = if (sysVol == 0) 0
+                    else (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
+                setAllGain(gainOffsetForStep(currentStep))
                 notifyStepChanged()
             }
         }
@@ -79,6 +91,7 @@ class VolumeController(private val context: Context) {
 
     // Session management
 
+    @Synchronized
     fun attachSession(sessionId: Int) {
         if (dynamicsProcessors.containsKey(sessionId) ||
             equalizers.containsKey(sessionId)
@@ -88,10 +101,7 @@ class VolumeController(private val context: Context) {
             try {
                 val config = DynamicsProcessing.Config.Builder(
                     DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION,
-                    1,     // channels
-                    true,  // pre-EQ enabled (for sound profiles)
-                    10,    // 10 EQ bands
-                    false, 0, false, 0, false
+                    1, true, 10, false, 0, false, 0, false
                 ).build()
                 val dp = DynamicsProcessing(Int.MAX_VALUE, sessionId, config)
                 dp.enabled = true
@@ -112,9 +122,14 @@ class VolumeController(private val context: Context) {
         } catch (_: Exception) {}
     }
 
+    @Synchronized
     fun detachSession(sessionId: Int) {
-        dynamicsProcessors.remove(sessionId)?.apply { enabled = false; release() }
-        equalizers.remove(sessionId)?.apply { enabled = false; release() }
+        dynamicsProcessors.remove(sessionId)?.apply {
+            try { enabled = false; release() } catch (_: Exception) {}
+        }
+        equalizers.remove(sessionId)?.apply {
+            try { enabled = false; release() } catch (_: Exception) {}
+        }
     }
 
     // Volume control
@@ -136,66 +151,69 @@ class VolumeController(private val context: Context) {
         return currentStep
     }
 
+    @Synchronized
     fun setStep(step: Int) {
-        val newStep = step.coerceIn(0, totalSteps)
-        currentStep = newStep
-        val stream = activeStream()
+        if (operating) return
+        operating = true
 
-        // Mute
-        if (newStep == 0) {
-            setSystemVolume(stream, 0)
-            setAllGain(0)
-            notifyStepChanged()
-            return
-        }
+        try {
+            val newStep = step.coerceIn(0, totalSteps)
+            currentStep = newStep
+            val stream = activeStream()
 
-        // Non-music streams: map linearly to system steps, no EQ
-        if (stream != AudioManager.STREAM_MUSIC) {
-            val sysMax = audioManager.getStreamMaxVolume(stream)
-            val sysVol = (newStep.toFloat() / totalSteps * sysMax).roundToInt().coerceIn(0, sysMax)
-            setSystemVolume(stream, sysVol)
-            notifyStepChanged()
-            return
-        }
+            if (newStep == 0) {
+                setSystemVolume(stream, 0)
+                setAllGain(0)
+                notifyStepChanged()
+                return
+            }
 
-        // Music: system volume + gain offset for sub-stepping
-        val (targetVol, gainOffset) = computeMapping(newStep)
-        val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            if (stream != AudioManager.STREAM_MUSIC) {
+                val sysMax = audioManager.getStreamMaxVolume(stream)
+                val sysVol = (newStep.toFloat() / totalSteps * sysMax).roundToInt().coerceIn(0, sysMax)
+                setSystemVolume(stream, sysVol)
+                notifyStepChanged()
+                return
+            }
 
-        if (targetVol != currentVol) {
-            val needsSmoothing = currentVol > 0 && abs(targetVol - currentVol) <= 2
-            if (needsSmoothing) {
-                // Small step boundary: pre-attenuate to avoid pop
-                val preAttenuation = -(targetVol - currentVol) * mbPerSystemStep + gainOffset
-                setAllGain(preAttenuation)
-                setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
-                handler.postDelayed({ setAllGain(gainOffset) }, 15)
-            } else {
-                // Big jump or from mute: set directly
-                setAllGain(gainOffset)
+            val (targetVol, gainOffset) = computeMapping(newStep)
+            val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+
+            // Set gain first, then system volume. No delayed callbacks (#7)
+            setAllGain(gainOffset)
+            if (targetVol != currentVol) {
                 setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
             }
-        } else {
-            setAllGain(gainOffset)
-        }
 
-        notifyStepChanged()
+            notifyStepChanged()
+        } finally {
+            operating = false
+        }
     }
 
+    @Synchronized
     fun syncFromSystem() {
-        val sysVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        lastSystemVol = sysVol
-        if (sysVol == 0) {
-            currentStep = 0
-            setAllGain(0)
-            return
+        if (operating) return
+        operating = true
+
+        try {
+            val sysVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            lastSystemVol = sysVol
+            if (sysVol == 0) {
+                currentStep = 0
+                setAllGain(0)
+                return
+            }
+            val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
+            currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
+            val (targetVol, gainOffset) = computeMapping(currentStep)
+            if (targetVol != sysVol) {
+                setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
+            }
+            setAllGain(gainOffset)
+        } finally {
+            operating = false
         }
-        val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
-        currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
-        // Re-apply mapping for the synced step
-        val (targetVol, gainOffset) = computeMapping(currentStep)
-        setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
-        setAllGain(gainOffset)
     }
 
     // Volume mapping
@@ -245,11 +263,12 @@ class VolumeController(private val context: Context) {
         return activeProfile != null
     }
 
+    @Synchronized
     fun setSoundProfile(profile: HeadphoneProfile?) {
         activeProfile = profile
-        for ((_, dp) in dynamicsProcessors) {
+        val sessions = dynamicsProcessors.toMap() // snapshot to prevent CME (#8)
+        for ((_, dp) in sessions) {
             applySoundProfile(dp)
-            // Re-apply volume gain in case profile change reset it
             applyDpGain(dp, gainOffsetForStep(currentStep))
         }
     }
@@ -259,7 +278,6 @@ class VolumeController(private val context: Context) {
             ensureProfileLoaded()
             val profile = activeProfile
 
-            // Enable/disable the pre-EQ stage on the channel
             val preEq = dp.getPreEqByChannelIndex(0)
             preEq.isEnabled = profile != null
             dp.setPreEqAllChannelsTo(preEq)
@@ -271,6 +289,8 @@ class VolumeController(private val context: Context) {
                     band.gain = 0f
                     dp.setPreEqBandAllChannelsTo(i, band)
                 }
+                // Reset preamp compensation
+                dp.setInputGainAllChannelsTo(gainOffsetForStep(currentStep) / 100f)
                 return
             }
 
@@ -284,28 +304,43 @@ class VolumeController(private val context: Context) {
                 band.gain = gain
                 dp.setPreEqBandAllChannelsTo(i, band)
             }
-        } catch (_: Exception) {}
+
+            // Apply preamp to compensate for EQ level changes (#9)
+            val preampMb = (profile.preamp * 100).toInt()
+            val volumeGain = gainOffsetForStep(currentStep)
+            dp.setInputGainAllChannelsTo((volumeGain + preampMb) / 100f)
+
+        } catch (e: Exception) {
+            // Log but don't silently swallow (#10)
+            android.util.Log.w("VolumeController", "Failed to apply sound profile", e)
+        }
     }
 
     // Helpers
 
     private fun setSystemVolume(stream: Int, volume: Int) {
-        selfChanging = true
-        audioManager.setStreamVolume(stream, volume, 0)
+        lastSelfChangeTime = System.currentTimeMillis()
         lastSystemVol = volume
-        selfChanging = false
+        audioManager.setStreamVolume(stream, volume, 0)
     }
 
+    @Synchronized
     private fun setAllGain(mb: Int) {
-        for ((_, dp) in dynamicsProcessors) applyDpGain(dp, mb)
-        for ((_, eq) in equalizers) applyEqGain(eq, mb)
+        val preampMb = activeProfile?.let { (it.preamp * 100).toInt() } ?: 0
+        val totalGain = mb + preampMb
+
+        val dpSnapshot = dynamicsProcessors.toMap() // snapshot (#8)
+        for ((_, dp) in dpSnapshot) applyDpGain(dp, totalGain)
+
+        val eqSnapshot = equalizers.toMap()
+        for ((_, eq) in eqSnapshot) applyEqGain(eq, mb) // EQ path has no preamp
     }
 
     private fun applyDpGain(dp: DynamicsProcessing, mb: Int) {
         try {
             dp.setInputGainAllChannelsTo(mb / 100f)
-        } catch (_: Exception) {
-            // Effect may have been released by system - try to re-attach
+        } catch (e: Exception) {
+            android.util.Log.w("VolumeController", "DynamicsProcessing failed, reattaching", e)
             reattachSessions()
         }
     }
@@ -316,17 +351,19 @@ class VolumeController(private val context: Context) {
         if (reattaching) return
         reattaching = true
         handler.post {
-            val sessionIds = (dynamicsProcessors.keys + equalizers.keys).toSet().toList()
-            // Release effects but keep observer
-            for ((_, dp) in dynamicsProcessors) {
-                try { dp.enabled = false; dp.release() } catch (_: Exception) {}
+            val sessionIds = synchronized(this) {
+                (dynamicsProcessors.keys + equalizers.keys).toSet().toList()
             }
-            for ((_, eq) in equalizers) {
-                try { eq.enabled = false; eq.release() } catch (_: Exception) {}
+            synchronized(this) {
+                for ((_, dp) in dynamicsProcessors) {
+                    try { dp.enabled = false; dp.release() } catch (_: Exception) {}
+                }
+                for ((_, eq) in equalizers) {
+                    try { eq.enabled = false; eq.release() } catch (_: Exception) {}
+                }
+                dynamicsProcessors.clear()
+                equalizers.clear()
             }
-            dynamicsProcessors.clear()
-            equalizers.clear()
-            // Re-attach all sessions
             for (id in sessionIds) attachSession(id)
             reattaching = false
         }
@@ -340,6 +377,7 @@ class VolumeController(private val context: Context) {
         } catch (_: Exception) {}
     }
 
+    @Synchronized
     fun release() {
         stopObserving()
         for ((_, dp) in dynamicsProcessors) {
