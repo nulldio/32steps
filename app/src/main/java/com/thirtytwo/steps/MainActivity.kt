@@ -212,7 +212,7 @@ class MainActivity : AppCompatActivity() {
         val addBtn = findViewById<View>(R.id.btn_add_preset)
         val searchInput = findViewById<EditText>(R.id.profile_search)
         val searchResultsView = findViewById<LinearLayout>(R.id.search_results)
-        var currentResults = listOf<HeadphoneProfile>()
+        var currentResults: List<HeadphoneProfile>
 
         addBtn.setOnClickListener {
             addBtn.visibility = View.GONE
