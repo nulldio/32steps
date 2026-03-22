@@ -48,9 +48,13 @@ class PrefsManager(context: Context) {
 
     fun addPreset(preset: Preset) {
         val presets = getPresets().toMutableList()
-        // Remove existing with same name
-        presets.removeAll { it.headphoneName == preset.headphoneName }
-        presets.add(preset)
+        // Update in place if exists, otherwise add at end
+        val index = presets.indexOfFirst { it.headphoneName == preset.headphoneName }
+        if (index >= 0) {
+            presets[index] = preset
+        } else {
+            presets.add(preset)
+        }
         savePresets(presets)
     }
 
