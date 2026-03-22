@@ -24,11 +24,16 @@ class PrefsManager(context: Context) {
         get() = prefs.getBoolean(KEY_BATTERY_DONE, false)
         set(value) = prefs.edit().putBoolean(KEY_BATTERY_DONE, value).apply()
 
+    var soundProfile: String?
+        get() = prefs.getString(KEY_SOUND_PROFILE, null)
+        set(value) = prefs.edit().putString(KEY_SOUND_PROFILE, value).apply()
+
     companion object {
         const val DEFAULT_STEPS = 32
         private const val KEY_TOTAL_STEPS = "total_steps"
         private const val KEY_CURRENT_STEP = "current_step"
         private const val KEY_ENABLED = "enabled"
         private const val KEY_BATTERY_DONE = "battery_setup_done"
+        private const val KEY_SOUND_PROFILE = "sound_profile"
     }
 }

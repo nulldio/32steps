@@ -13,6 +13,8 @@ import android.os.IBinder
 class AudioService : Service() {
 
     private lateinit var volumeController: VolumeController
+    private lateinit var profileManager: SoundProfileManager
+    private lateinit var prefs: PrefsManager
     private var overlay: VolumeOverlay? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
@@ -25,10 +27,16 @@ class AudioService : Service() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification())
 
+        prefs = PrefsManager(this)
         volumeController = VolumeController.getInstance(this)
+        profileManager = SoundProfileManager(this)
+
         volumeController.attachSession(0)
         volumeController.syncFromSystem()
         volumeController.startObserving()
+
+        // Apply saved sound profile
+        applySavedProfile(0)
 
         overlay = VolumeOverlay(this)
         volumeController.addStepListener(stepListener)
@@ -38,17 +46,36 @@ class AudioService : Service() {
         val sessionId = intent?.getIntExtra(EXTRA_SESSION_ID, -1) ?: -1
         if (sessionId > 0) {
             when (intent?.action) {
-                ACTION_ATTACH_SESSION -> volumeController.attachSession(sessionId)
-                ACTION_DETACH_SESSION -> volumeController.detachSession(sessionId)
+                ACTION_ATTACH_SESSION -> {
+                    volumeController.attachSession(sessionId)
+                    applySavedProfile(sessionId)
+                }
+                ACTION_DETACH_SESSION -> {
+                    volumeController.detachSession(sessionId)
+                    profileManager.removeProfile(sessionId)
+                }
+            }
+        }
+        when (intent?.action) {
+            ACTION_APPLY_PROFILE -> applySavedProfile(0)
+            ACTION_CLEAR_PROFILE -> {
+                profileManager.removeAll()
             }
         }
         return START_STICKY
+    }
+
+    private fun applySavedProfile(sessionId: Int) {
+        val profileName = prefs.soundProfile ?: return
+        val profile = profileManager.findProfile(profileName) ?: return
+        profileManager.applyProfile(profile, sessionId)
     }
 
     override fun onDestroy() {
         volumeController.removeStepListener(stepListener)
         overlay?.hide()
         volumeController.release()
+        profileManager.removeAll()
         super.onDestroy()
     }
 
@@ -95,6 +122,8 @@ class AudioService : Service() {
         const val NOTIFICATION_ID = 1
         const val ACTION_ATTACH_SESSION = "com.thirtytwo.steps.ATTACH_SESSION"
         const val ACTION_DETACH_SESSION = "com.thirtytwo.steps.DETACH_SESSION"
+        const val ACTION_APPLY_PROFILE = "com.thirtytwo.steps.APPLY_PROFILE"
+        const val ACTION_CLEAR_PROFILE = "com.thirtytwo.steps.CLEAR_PROFILE"
         const val EXTRA_SESSION_ID = "session_id"
 
         @Volatile
