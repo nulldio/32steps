@@ -88,7 +88,7 @@ class SoundProfileManager(private val context: Context) {
             val numBands = eq.numberOfBands.toInt()
             for (i in 0 until numBands.coerceAtMost(profile.bands.size)) {
                 val (_, gain) = profile.bands[i]
-                val totalGain = ((gain + profile.preamp) * 100).toInt()
+                val totalGain = (gain * 100).toInt()
                 val range = eq.bandLevelRange
                 val clamped = totalGain.toShort().coerceIn(range[0], range[1])
                 eq.setBandLevel(i.toShort(), clamped)
