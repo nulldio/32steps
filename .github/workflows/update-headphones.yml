@@ -130,7 +130,7 @@ jobs:
 
       - name: Set up Android SDK
         if: steps.check.outputs.changed == 'true'
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
 
       - name: Decode keystore
         if: steps.check.outputs.changed == 'true'
