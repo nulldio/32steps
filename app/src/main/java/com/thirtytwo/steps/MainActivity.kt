@@ -195,21 +195,34 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .create()
 
-        var currentResults = profileManager.searchProfiles("")
         val adapter = ArrayAdapter(
             this,
             android.R.layout.simple_list_item_1,
-            currentResults.map { "${it.name} (${it.category})" }.toMutableList()
+            mutableListOf<String>()
         )
         listView.adapter = adapter
+        var currentResults = listOf<HeadphoneProfile>()
+
+        // Load profiles in background
+        Thread {
+            profileManager.loadProfiles()
+            val initial = profileManager.searchProfiles("")
+            runOnUiThread {
+                currentResults = initial
+                adapter.clear()
+                adapter.addAll(initial.map { "${it.name} (${it.category})" })
+                adapter.notifyDataSetChanged()
+            }
+        }.start()
 
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                currentResults = profileManager.searchProfiles(s?.toString() ?: "")
+                val results = profileManager.searchProfiles(s?.toString() ?: "")
+                currentResults = results
                 adapter.clear()
-                adapter.addAll(currentResults.map { "${it.name} (${it.category})" })
+                adapter.addAll(results.map { "${it.name} (${it.category})" })
                 adapter.notifyDataSetChanged()
             }
         })
@@ -219,7 +232,6 @@ class MainActivity : AppCompatActivity() {
                 val profile = currentResults[position]
                 prefs.soundProfile = profile.name
                 updateProfileLabel()
-                // Tell the service to apply the profile
                 val intent = Intent(this, AudioService::class.java)
                 intent.action = AudioService.ACTION_APPLY_PROFILE
                 startService(intent)
