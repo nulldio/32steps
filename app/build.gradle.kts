@@ -17,6 +17,10 @@ android {
         versionName = "1.8"
     }
 
+    androidResources {
+        noCompress += "gz"
+    }
+
     if (file("../release-key.jks").exists()) {
         val props = Properties()
         val localProps = file("../local.properties")
