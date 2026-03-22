@@ -180,7 +180,7 @@ class MainActivity : AppCompatActivity() {
                 stepsInput.setText(preset.steps.toString())
                 volumeController.syncFromSystem()
                 updateVolumeBar()
-                val intent = Intent(this, AudioService::class.java)
+                val intent = Intent(this@MainActivity, AudioService::class.java)
                 intent.action = AudioService.ACTION_APPLY_PROFILE
                 startService(intent)
             }
@@ -193,7 +193,7 @@ class MainActivity : AppCompatActivity() {
                         prefs.removePreset(preset.headphoneName)
                         if (prefs.soundProfile == preset.headphoneName) {
                             prefs.soundProfile = null
-                            val intent = Intent(this, AudioService::class.java)
+                            val intent = Intent(this@MainActivity, AudioService::class.java)
                             intent.action = AudioService.ACTION_CLEAR_PROFILE
                             startService(intent)
                         }
@@ -265,7 +265,7 @@ class MainActivity : AppCompatActivity() {
                         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                         imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
 
-                        val intent = Intent(this, AudioService::class.java)
+                        val intent = Intent(this@MainActivity, AudioService::class.java)
                         intent.action = AudioService.ACTION_APPLY_PROFILE
                         startService(intent)
                     }
