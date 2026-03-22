@@ -34,7 +34,7 @@ class SoundProfileManager(private val context: Context) {
     fun loadProfiles(): List<HeadphoneProfile> {
         profiles?.let { return it }
 
-        val stream = context.assets.open("headphones.json.gz")
+        val stream = context.assets.open("headphones.dat")
         val gzip = GZIPInputStream(stream)
         val json = InputStreamReader(gzip).readText()
         gzip.close()
