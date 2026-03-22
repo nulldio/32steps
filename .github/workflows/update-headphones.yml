@@ -16,8 +16,17 @@ jobs:
 
       - name: Generate headphone database
         run: |
-          python3 -c "
+          python3 << 'PYEOF'
           import os, json, gzip
+
+          # Load existing profiles
+          old_names = set()
+          try:
+              with gzip.open('app/src/main/assets/headphones.dat', 'rb') as f:
+                  old_data = json.loads(f.read().decode())
+                  old_names = {p['n'] for p in old_data}
+          except:
+              pass
 
           profiles = []
           seen = set()
@@ -55,13 +64,25 @@ jobs:
                           profiles.append({'n': name, 'c': cat, 'p': preamp, 'b': bands})
 
           profiles.sort(key=lambda x: x['n'].lower())
-          data = json.dumps(profiles, separators=(',',':'))
+          new_names = {p['n'] for p in profiles}
+          added = sorted(new_names - old_names)
 
+          data = json.dumps(profiles, separators=(',',':'))
           with gzip.open('app/src/main/assets/headphones.dat', 'wb') as f:
               f.write(data.encode())
 
-          print(f'Generated {len(profiles)} profiles')
-          "
+          # Write changelog for the workflow to pick up
+          if added:
+              changelog = f"Added {len(added)} new headphone profiles: {', '.join(added[:20])}"
+              if len(added) > 20:
+                  changelog += f", and {len(added) - 20} more"
+          else:
+              changelog = "Updated headphone profiles."
+          with open('/tmp/changelog.txt', 'w') as f:
+              f.write(changelog)
+
+          print(f'Generated {len(profiles)} profiles, {len(added)} new')
+          PYEOF
 
       - name: Check for changes
         id: check
@@ -89,7 +110,9 @@ jobs:
           sed -i "s/versionCode = $CURRENT_CODE/versionCode = $NEW_CODE/" app/build.gradle.kts
           sed -i "s/versionName = \"$CURRENT_NAME\"/versionName = \"$NEW_NAME\"/" app/build.gradle.kts
 
-          echo "Updated headphone profiles." > "fastlane/metadata/android/en-US/changelogs/$NEW_CODE.txt"
+          cat /tmp/changelog.txt > "fastlane/metadata/android/en-US/changelogs/$NEW_CODE.txt"
+          CHANGELOG=$(cat /tmp/changelog.txt)
+          echo "CHANGELOG=$CHANGELOG" >> $GITHUB_ENV
 
           echo "NEW_NAME=$NEW_NAME" >> $GITHUB_ENV
           echo "NEW_CODE=$NEW_CODE" >> $GITHUB_ENV
@@ -137,7 +160,7 @@ jobs:
         with:
           tag_name: v${{ env.NEW_NAME }}
           name: v${{ env.NEW_NAME }}
-          body: Updated headphone profiles.
+          body: ${{ env.CHANGELOG }}
           files: app/build/outputs/apk/release/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
