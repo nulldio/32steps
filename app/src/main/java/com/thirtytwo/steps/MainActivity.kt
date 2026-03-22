@@ -20,7 +20,6 @@ import android.widget.EditText
 import android.widget.ListView
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -35,7 +34,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var setupBtn: Button
     private lateinit var profileLabel: TextView
     private lateinit var profileClear: TextView
+    private lateinit var profileSearch: EditText
+    private lateinit var profileResultsCard: View
+    private lateinit var profileActiveCard: View
+    private lateinit var profileResults: ListView
     private var pendingSetup = false
+    private var searchResults = listOf<HeadphoneProfile>()
+    private var profilesLoaded = false
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         runOnUiThread {
@@ -59,12 +64,22 @@ class MainActivity : AppCompatActivity() {
         setupBtn = findViewById(R.id.btn_setup)
         profileLabel = findViewById(R.id.profile_label)
         profileClear = findViewById(R.id.profile_clear)
+        profileSearch = findViewById(R.id.profile_search)
+        profileResultsCard = findViewById(R.id.profile_results_card)
+        profileActiveCard = findViewById(R.id.profile_active_card)
+        profileResults = findViewById(R.id.profile_results)
 
         setupStepsInput()
         setupVolumeSeekbar()
         setupSoundProfile()
         setupBtn.setOnClickListener { openNextSetupStep() }
         updateVolumeBar()
+
+        // Preload profiles in background
+        Thread {
+            profileManager.loadProfiles()
+            profilesLoaded = true
+        }.start()
     }
 
     override fun onResume() {
@@ -160,8 +175,55 @@ class MainActivity : AppCompatActivity() {
     private fun setupSoundProfile() {
         updateProfileLabel()
 
-        findViewById<View>(R.id.profile_card).setOnClickListener {
-            showHeadphonePicker()
+        val adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            mutableListOf<String>()
+        )
+        profileResults.adapter = adapter
+
+        profileSearch.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus && profilesLoaded) {
+                profileSearch.setText("")
+            } else if (!hasFocus) {
+                profileSearch.setText("")
+                profileResultsCard.visibility = View.GONE
+            }
+        }
+
+        profileSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val query = s?.toString() ?: ""
+                if (query.isEmpty() || !profilesLoaded) {
+                    profileResultsCard.visibility = View.GONE
+                    return
+                }
+                searchResults = profileManager.searchProfiles(query)
+                adapter.clear()
+                adapter.addAll(searchResults.map { it.name })
+                adapter.notifyDataSetChanged()
+                profileResultsCard.visibility = if (searchResults.isEmpty()) View.GONE else View.VISIBLE
+            }
+        })
+
+        profileResults.setOnItemClickListener { _, _, position, _ ->
+            if (position < searchResults.size) {
+                val profile = searchResults[position]
+                prefs.soundProfile = profile.name
+                updateProfileLabel()
+                profileSearch.setText("")
+                profileSearch.clearFocus()
+                profileResultsCard.visibility = View.GONE
+
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(profileSearch.windowToken, 0)
+
+                val intent = Intent(this, AudioService::class.java)
+                intent.action = AudioService.ACTION_APPLY_PROFILE
+                startService(intent)
+            }
         }
 
         profileClear.setOnClickListener {
@@ -177,69 +239,10 @@ class MainActivity : AppCompatActivity() {
         val saved = prefs.soundProfile
         if (saved != null) {
             profileLabel.text = saved
-            profileClear.visibility = View.VISIBLE
+            profileActiveCard.visibility = View.VISIBLE
         } else {
-            profileLabel.text = "Select headphones"
-            profileClear.visibility = View.GONE
+            profileActiveCard.visibility = View.GONE
         }
-    }
-
-    private fun showHeadphonePicker() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_headphone_search, null)
-        val searchInput = dialogView.findViewById<EditText>(R.id.search_input)
-        val listView = dialogView.findViewById<ListView>(R.id.search_results)
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Select headphones")
-            .setView(dialogView)
-            .setNegativeButton("Cancel", null)
-            .create()
-
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_list_item_1,
-            mutableListOf<String>()
-        )
-        listView.adapter = adapter
-        var currentResults = listOf<HeadphoneProfile>()
-
-        // Load profiles in background
-        Thread {
-            profileManager.loadProfiles()
-            val initial = profileManager.searchProfiles("")
-            runOnUiThread {
-                currentResults = initial
-                adapter.clear()
-                adapter.addAll(initial.map { "${it.name} (${it.category})" })
-                adapter.notifyDataSetChanged()
-            }
-        }.start()
-
-        searchInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val results = profileManager.searchProfiles(s?.toString() ?: "")
-                currentResults = results
-                adapter.clear()
-                adapter.addAll(results.map { "${it.name} (${it.category})" })
-                adapter.notifyDataSetChanged()
-            }
-        })
-
-        listView.setOnItemClickListener { _, _, position, _ ->
-            if (position < currentResults.size) {
-                val profile = currentResults[position]
-                prefs.soundProfile = profile.name
-                updateProfileLabel()
-                val intent = Intent(this, AudioService::class.java)
-                intent.action = AudioService.ACTION_APPLY_PROFILE
-                startService(intent)
-                dialog.dismiss()
-            }
-        }
-
-        dialog.show()
     }
 
     // Permission setup
