@@ -12,7 +12,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Clone AutoEQ
         run: git clone --depth=1 https://github.com/jaakkopasanen/AutoEq.git /tmp/AutoEq
@@ -122,14 +122,14 @@ jobs:
 
       - name: Set up JDK
         if: steps.check.outputs.changed == 'true'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Set up Android SDK
         if: steps.check.outputs.changed == 'true'
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Decode keystore
         if: steps.check.outputs.changed == 'true'
@@ -159,7 +159,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.check.outputs.changed == 'true'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.NEW_NAME }}
           name: v${{ env.NEW_NAME }}
