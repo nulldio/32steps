@@ -13,8 +13,8 @@ import android.os.IBinder
 class AudioService : Service() {
 
     private lateinit var volumeController: VolumeController
-    private lateinit var profileManager: SoundProfileManager
     private lateinit var prefs: PrefsManager
+    private lateinit var profileManager: SoundProfileManager
     private var overlay: VolumeOverlay? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
@@ -35,8 +35,8 @@ class AudioService : Service() {
         volumeController.syncFromSystem()
         volumeController.startObserving()
 
-        // Apply saved sound profile
-        applySavedProfile(0)
+        // Apply saved sound profile via DynamicsProcessing pre-EQ
+        applySavedProfile()
 
         overlay = VolumeOverlay(this)
         volumeController.addStepListener(stepListener)
@@ -46,36 +46,27 @@ class AudioService : Service() {
         val sessionId = intent?.getIntExtra(EXTRA_SESSION_ID, -1) ?: -1
         if (sessionId > 0) {
             when (intent?.action) {
-                ACTION_ATTACH_SESSION -> {
-                    volumeController.attachSession(sessionId)
-                    applySavedProfile(sessionId)
-                }
-                ACTION_DETACH_SESSION -> {
-                    volumeController.detachSession(sessionId)
-                    profileManager.removeProfile(sessionId)
-                }
+                ACTION_ATTACH_SESSION -> volumeController.attachSession(sessionId)
+                ACTION_DETACH_SESSION -> volumeController.detachSession(sessionId)
             }
         }
         when (intent?.action) {
-            ACTION_APPLY_PROFILE -> applySavedProfile(0)
-            ACTION_CLEAR_PROFILE -> {
-                profileManager.removeAll()
-            }
+            ACTION_APPLY_PROFILE -> applySavedProfile()
+            ACTION_CLEAR_PROFILE -> volumeController.setSoundProfile(null)
         }
         return START_STICKY
     }
 
-    private fun applySavedProfile(sessionId: Int) {
+    private fun applySavedProfile() {
         val profileName = prefs.soundProfile ?: return
         val profile = profileManager.findProfile(profileName) ?: return
-        profileManager.applyProfile(profile, sessionId)
+        volumeController.setSoundProfile(profile)
     }
 
     override fun onDestroy() {
         volumeController.removeStepListener(stepListener)
         overlay?.hide()
         volumeController.release()
-        profileManager.removeAll()
         super.onDestroy()
     }
 

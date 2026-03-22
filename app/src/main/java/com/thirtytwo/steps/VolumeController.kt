@@ -88,12 +88,16 @@ class VolumeController(private val context: Context) {
             try {
                 val config = DynamicsProcessing.Config.Builder(
                     DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION,
-                    1, false, 0, false, 0, false, 0, false
+                    1,     // channels
+                    true,  // pre-EQ enabled (for sound profiles)
+                    10,    // 10 EQ bands
+                    false, 0, false, 0, false
                 ).build()
                 val dp = DynamicsProcessing(Int.MAX_VALUE, sessionId, config)
                 dp.enabled = true
                 dynamicsProcessors[sessionId] = dp
                 applyDpGain(dp, gainOffsetForStep(currentStep))
+                applySoundProfile(dp)
                 return
             } catch (_: Exception) {
                 useDynamicsProcessing = false
@@ -221,6 +225,41 @@ class VolumeController(private val context: Context) {
         val avgMbPerStep = (totalDb / (systemMax - 1) * 100).toInt()
         if (avgMbPerStep <= 0) return 300
         return avgMbPerStep
+    }
+
+    // Sound profile via DynamicsProcessing pre-EQ
+
+    private var activeProfile: HeadphoneProfile? = null
+
+    fun setSoundProfile(profile: HeadphoneProfile?) {
+        activeProfile = profile
+        for ((_, dp) in dynamicsProcessors) applySoundProfile(dp)
+    }
+
+    private fun applySoundProfile(dp: DynamicsProcessing) {
+        try {
+            val profile = activeProfile
+            if (profile == null) {
+                // Clear all pre-EQ bands
+                for (i in 0 until 10) {
+                    val band = dp.getPreEqBandByChannelIndex(0, i)
+                    band.isEnabled = false
+                    dp.setPreEqBandAllChannelsTo(i, band)
+                }
+                return
+            }
+
+            // Apply profile bands to pre-EQ
+            val eqBandFreqs = intArrayOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
+            for (i in 0 until 10.coerceAtMost(profile.bands.size)) {
+                val (_, gain) = profile.bands[i]
+                val band = dp.getPreEqBandByChannelIndex(0, i)
+                band.isEnabled = true
+                band.cutoffFrequency = eqBandFreqs.getOrElse(i) { 1000 }.toFloat()
+                band.gain = gain
+                dp.setPreEqBandAllChannelsTo(i, band)
+            }
+        } catch (_: Exception) {}
     }
 
     // Helpers
