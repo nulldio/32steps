@@ -134,6 +134,12 @@ class MainActivity : AppCompatActivity() {
                     prefs.totalSteps = raw
                     volumeController.syncFromSystem()
                     updateVolumeBar()
+                    // Update active preset's step count
+                    val activeProfile = prefs.soundProfile
+                    if (activeProfile != null) {
+                        prefs.addPreset(Preset(activeProfile, raw))
+                        loadPresetGrid()
+                    }
                 }
             }
         })
