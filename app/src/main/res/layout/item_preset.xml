@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardBackgroundColor="?colorSurfaceVariant"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp"
+    android:layout_margin="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="20dp">
+
+        <ImageView
+            android:id="@+id/preset_icon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_headphone"
+            app:tint="?colorOnSurface"
+            android:layout_marginBottom="10dp"
+            android:contentDescription="Headphones" />
+
+        <TextView
+            android:id="@+id/preset_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?colorOnSurface"
+            android:textSize="12sp"
+            android:textAlignment="center"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/preset_steps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?colorOnSurfaceVariant"
+            android:textSize="11sp"
+            android:textAlignment="center"
+            android:layout_marginTop="2dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

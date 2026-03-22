@@ -162,17 +162,26 @@
         android:layout_marginBottom="12dp"
         android:layout_marginStart="6dp" />
 
-    <!-- Active profile display -->
+    <!-- Preset grid -->
+    <GridLayout
+        android:id="@+id/preset_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Add preset button -->
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/profile_active_card"
+        android:id="@+id/btn_add_preset"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="?colorSurfaceVariant"
         app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
         app:strokeWidth="0dp"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone">
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -181,81 +190,25 @@
             android:gravity="center_vertical"
             android:paddingStart="22dp"
             android:paddingEnd="22dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="18dp">
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_add"
+                app:tint="?colorOnSurfaceVariant"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="Add" />
 
             <TextView
-                android:id="@+id/profile_label"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text=""
-                android:textColor="?colorOnSurface"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/profile_clear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Clear"
+                android:text="Add headphones"
                 android:textColor="?colorOnSurfaceVariant"
-                android:textSize="13sp"
-                android:padding="4dp" />
+                android:textSize="15sp" />
 
         </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Search input -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/profile_card"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardBackgroundColor="?colorSurfaceVariant"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp"
-        android:layout_marginBottom="8dp">
-
-        <EditText
-            android:id="@+id/profile_search"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Search headphones..."
-            android:inputType="text"
-            android:textColor="?colorOnSurface"
-            android:textColorHint="?colorOnSurfaceVariant"
-            android:textSize="15sp"
-            android:background="@android:color/transparent"
-            android:paddingStart="22dp"
-            android:paddingEnd="22dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="18dp"
-            android:cursorVisible="false" />
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Search results -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/profile_results_card"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardBackgroundColor="?colorSurfaceVariant"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0dp"
-        android:layout_marginBottom="12dp"
-        android:visibility="gone">
-
-        <ListView
-            android:id="@+id/profile_results"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="0dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:clipToPadding="false" />
 
     </com.google.android.material.card.MaterialCardView>
 

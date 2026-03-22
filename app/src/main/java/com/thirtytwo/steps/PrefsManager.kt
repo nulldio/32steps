@@ -2,6 +2,13 @@ package com.thirtytwo.steps
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONArray
+import org.json.JSONObject
+
+data class Preset(
+    val headphoneName: String,
+    val steps: Int
+)
 
 class PrefsManager(context: Context) {
 
@@ -28,6 +35,42 @@ class PrefsManager(context: Context) {
         get() = prefs.getString(KEY_SOUND_PROFILE, null)
         set(value) = prefs.edit().putString(KEY_SOUND_PROFILE, value).apply()
 
+    fun getPresets(): List<Preset> {
+        val json = prefs.getString(KEY_PRESETS, null) ?: return emptyList()
+        val array = JSONArray(json)
+        val list = mutableListOf<Preset>()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            list.add(Preset(obj.getString("name"), obj.getInt("steps")))
+        }
+        return list
+    }
+
+    fun addPreset(preset: Preset) {
+        val presets = getPresets().toMutableList()
+        // Remove existing with same name
+        presets.removeAll { it.headphoneName == preset.headphoneName }
+        presets.add(preset)
+        savePresets(presets)
+    }
+
+    fun removePreset(headphoneName: String) {
+        val presets = getPresets().toMutableList()
+        presets.removeAll { it.headphoneName == headphoneName }
+        savePresets(presets)
+    }
+
+    private fun savePresets(presets: List<Preset>) {
+        val array = JSONArray()
+        for (p in presets) {
+            val obj = JSONObject()
+            obj.put("name", p.headphoneName)
+            obj.put("steps", p.steps)
+            array.put(obj)
+        }
+        prefs.edit().putString(KEY_PRESETS, array.toString()).apply()
+    }
+
     companion object {
         const val DEFAULT_STEPS = 32
         private const val KEY_TOTAL_STEPS = "total_steps"
@@ -35,5 +78,6 @@ class PrefsManager(context: Context) {
         private const val KEY_ENABLED = "enabled"
         private const val KEY_BATTERY_DONE = "battery_setup_done"
         private const val KEY_SOUND_PROFILE = "sound_profile"
+        private const val KEY_PRESETS = "presets"
     }
 }
