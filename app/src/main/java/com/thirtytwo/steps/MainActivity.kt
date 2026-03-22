@@ -188,18 +188,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Tap to apply
+            // Tap to apply or deselect
             card.setOnClickListener {
-                prefs.totalSteps = preset.steps
-                prefs.soundProfile = preset.headphoneName
-                stepsInput.setText(preset.steps.toString())
-                volumeController.syncFromSystem()
-                updateVolumeBar()
-                // Update highlights without rebuilding list
-                refreshPresetHighlights()
-                val intent = Intent(this@MainActivity, AudioService::class.java)
-                intent.action = AudioService.ACTION_APPLY_PROFILE
-                startService(intent)
+                if (prefs.soundProfile == preset.headphoneName) {
+                    // Deselect
+                    prefs.soundProfile = null
+                    refreshPresetHighlights()
+                    val intent = Intent(this@MainActivity, AudioService::class.java)
+                    intent.action = AudioService.ACTION_CLEAR_PROFILE
+                    startService(intent)
+                } else {
+                    // Apply
+                    prefs.totalSteps = preset.steps
+                    prefs.soundProfile = preset.headphoneName
+                    stepsInput.setText(preset.steps.toString())
+                    volumeController.syncFromSystem()
+                    updateVolumeBar()
+                    refreshPresetHighlights()
+                    val intent = Intent(this@MainActivity, AudioService::class.java)
+                    intent.action = AudioService.ACTION_APPLY_PROFILE
+                    startService(intent)
+                }
             }
 
             // Long press to delete
