@@ -81,7 +81,10 @@ jobs:
           NEW_CODE=$((CURRENT_CODE + 1))
           MAJOR=$(echo "$CURRENT_NAME" | cut -d. -f1)
           MINOR=$(echo "$CURRENT_NAME" | cut -d. -f2)
-          NEW_NAME="$MAJOR.$((MINOR + 1))"
+          # Get patch version, default to 0 if not present
+          PATCH=$(echo "$CURRENT_NAME" | cut -d. -f3 -s)
+          PATCH=${PATCH:-0}
+          NEW_NAME="$MAJOR.$MINOR.$((PATCH + 1))"
 
           sed -i "s/versionCode = $CURRENT_CODE/versionCode = $NEW_CODE/" app/build.gradle.kts
           sed -i "s/versionName = \"$CURRENT_NAME\"/versionName = \"$NEW_NAME\"/" app/build.gradle.kts
