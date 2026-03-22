@@ -74,27 +74,28 @@ jobs:
           with gzip.open('app/src/main/assets/headphones.dat', 'wb') as f:
               f.write(data.encode())
 
-          # Write changelog for the workflow to pick up
+          # Only write new database if there are actually new profiles
           if added:
+              with gzip.open('app/src/main/assets/headphones.dat', 'wb') as f:
+                  f.write(data.encode())
               changelog = f"Added {len(added)} new headphone profiles: {', '.join(added[:20])}"
               if len(added) > 20:
                   changelog += f", and {len(added) - 20} more"
+              with open('/tmp/changelog.txt', 'w') as f:
+                  f.write(changelog)
+              with open('/tmp/has_changes.txt', 'w') as f:
+                  f.write('true')
+              print(f'Generated {len(profiles)} profiles, {len(added)} new: {", ".join(added[:5])}')
           else:
-              changelog = "Updated headphone profiles."
-          with open('/tmp/changelog.txt', 'w') as f:
-              f.write(changelog)
-
-          print(f'Generated {len(profiles)} profiles, {len(added)} new')
+              with open('/tmp/has_changes.txt', 'w') as f:
+                  f.write('false')
+              print(f'No new profiles. Total: {len(profiles)}')
           PYEOF
 
       - name: Check for changes
         id: check
         run: |
-          if git diff --quiet app/src/main/assets/headphones.dat; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
+          echo "changed=$(cat /tmp/has_changes.txt)" >> $GITHUB_OUTPUT
 
       - name: Bump version and build
         if: steps.check.outputs.changed == 'true'
