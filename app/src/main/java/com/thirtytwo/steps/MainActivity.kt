@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var presetList: LinearLayout
     private var pendingSetup = false
     private var profilesLoaded = false
+    private var ignoreTextChange = false
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         runOnUiThread {
@@ -123,6 +124,7 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
+                if (ignoreTextChange) return
                 val text = s?.toString()?.takeIf { it.isNotEmpty() } ?: return
                 val raw = text.toIntOrNull() ?: return
                 if (raw > 1000) {
@@ -201,7 +203,9 @@ class MainActivity : AppCompatActivity() {
                     // Apply
                     prefs.totalSteps = preset.steps
                     prefs.soundProfile = preset.headphoneName
+                    ignoreTextChange = true
                     stepsInput.setText(preset.steps.toString())
+                    ignoreTextChange = false
                     volumeController.syncFromSystem()
                     updateVolumeBar()
                     refreshPresetHighlights()
