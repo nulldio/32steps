@@ -231,6 +231,8 @@ class VolumeController(private val context: Context) {
 
     private var activeProfile: HeadphoneProfile? = null
 
+    fun hasSoundProfile(): Boolean = activeProfile != null
+
     fun setSoundProfile(profile: HeadphoneProfile?) {
         activeProfile = profile
         for ((_, dp) in dynamicsProcessors) applySoundProfile(dp)
