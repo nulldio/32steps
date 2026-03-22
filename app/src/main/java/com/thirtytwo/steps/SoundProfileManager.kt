@@ -82,7 +82,7 @@ class SoundProfileManager(private val context: Context) {
     fun applyProfile(profile: HeadphoneProfile, sessionId: Int) {
         removeProfile(sessionId)
         try {
-            val eq = Equalizer(Int.MAX_VALUE, sessionId)
+            val eq = Equalizer(0, sessionId)
             eq.enabled = true
 
             val numBands = eq.numberOfBands.toInt()
