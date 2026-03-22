@@ -173,6 +173,15 @@ class MainActivity : AppCompatActivity() {
             card.findViewById<TextView>(R.id.preset_name).text = preset.headphoneName
             card.findViewById<TextView>(R.id.preset_steps).text = "${preset.steps} steps"
 
+            // Highlight active preset
+            val isActive = prefs.soundProfile == preset.headphoneName
+            if (isActive) {
+                (card as com.google.android.material.card.MaterialCardView).apply {
+                    strokeWidth = (2 * resources.displayMetrics.density).toInt()
+                    strokeColor = getColor(com.google.android.material.R.color.material_on_surface_emphasis_medium)
+                }
+            }
+
             // Tap to apply
             card.setOnClickListener {
                 prefs.totalSteps = preset.steps
@@ -180,6 +189,7 @@ class MainActivity : AppCompatActivity() {
                 stepsInput.setText(preset.steps.toString())
                 volumeController.syncFromSystem()
                 updateVolumeBar()
+                loadPresetGrid()
                 val intent = Intent(this@MainActivity, AudioService::class.java)
                 intent.action = AudioService.ACTION_APPLY_PROFILE
                 startService(intent)
