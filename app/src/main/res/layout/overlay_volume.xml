@@ -31,6 +31,17 @@
             android:textColor="@color/overlay_text"
             android:textSize="15sp" />
 
+        <ImageView
+            android:id="@+id/btn_ringer"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_ring"
+            android:tint="@color/overlay_text_secondary"
+            android:contentDescription="Ringer mode"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="12dp" />
+
         <TextView
             android:id="@+id/step_text"
             android:layout_width="wrap_content"

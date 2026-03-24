@@ -69,6 +69,7 @@ class VolumeOverlay(private val context: Context) {
                 extraSliders = overlayView?.findViewById(R.id.extra_sliders)
 
                 setupMediaSeekbar(totalSteps)
+                setupRingerToggle()
                 setupExpandButton()
                 setupStreamSliders()
 
@@ -113,6 +114,40 @@ class VolumeOverlay(private val context: Context) {
                 }
             }
         })
+    }
+
+    private fun setupRingerToggle() {
+        val ringerBtn = overlayView?.findViewById<ImageView>(R.id.btn_ringer) ?: return
+        updateRingerIcon(ringerBtn)
+
+        ringerBtn.setOnClickListener {
+            try {
+                val current = audioManager.ringerMode
+                val next = when (current) {
+                    AudioManager.RINGER_MODE_NORMAL -> AudioManager.RINGER_MODE_VIBRATE
+                    AudioManager.RINGER_MODE_VIBRATE -> AudioManager.RINGER_MODE_SILENT
+                    else -> AudioManager.RINGER_MODE_NORMAL
+                }
+                audioManager.ringerMode = next
+                updateRingerIcon(ringerBtn)
+            } catch (_: Exception) {}
+
+            // Reset hide timer
+            hideRunnable?.let { handler.removeCallbacks(it) }
+            if (!isExpanded) {
+                hideRunnable = Runnable { hide() }
+                handler.postDelayed(hideRunnable!!, SHOW_DURATION_MS)
+            }
+        }
+    }
+
+    private fun updateRingerIcon(btn: ImageView) {
+        val icon = when (audioManager.ringerMode) {
+            AudioManager.RINGER_MODE_NORMAL -> R.drawable.ic_ring
+            AudioManager.RINGER_MODE_VIBRATE -> R.drawable.ic_vibrate
+            else -> R.drawable.ic_silent
+        }
+        btn.setImageResource(icon)
     }
 
     private fun setupExpandButton() {
