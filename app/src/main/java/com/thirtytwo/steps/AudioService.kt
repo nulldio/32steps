@@ -19,7 +19,6 @@ class AudioService : Service() {
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         if (!appInForeground) overlay?.show(step, total)
-        updateNotification(step, total)
     }
 
     override fun onCreate() {
@@ -91,6 +90,7 @@ class AudioService : Service() {
             description = "Keeps volume control active"
             setShowBadge(false)
             setSound(null, null)
+            lockscreenVisibility = Notification.VISIBILITY_SECRET
         }
         notificationManager().createNotificationChannel(channel)
     }
