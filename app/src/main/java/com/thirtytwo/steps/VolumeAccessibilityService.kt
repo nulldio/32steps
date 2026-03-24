@@ -54,6 +54,13 @@ class VolumeAccessibilityService : AccessibilityService() {
 
         if (!isVolumeKey) return false
 
+        // During calls, let system handle volume natively
+        val audioManager = getSystemService(android.content.Context.AUDIO_SERVICE) as android.media.AudioManager
+        if (audioManager.mode == android.media.AudioManager.MODE_IN_CALL ||
+            audioManager.mode == android.media.AudioManager.MODE_IN_COMMUNICATION) {
+            return false
+        }
+
         when (event.action) {
             KeyEvent.ACTION_DOWN -> {
                 if (holdingKey == null) {
