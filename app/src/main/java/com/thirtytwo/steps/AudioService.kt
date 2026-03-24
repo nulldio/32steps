@@ -78,7 +78,8 @@ class AudioService : Service() {
         prefs.addPreset(Preset(activeProfile, prefs.totalSteps,
             am.getStreamVolume(android.media.AudioManager.STREAM_RING),
             am.getStreamVolume(android.media.AudioManager.STREAM_NOTIFICATION),
-            am.getStreamVolume(android.media.AudioManager.STREAM_ALARM)
+            am.getStreamVolume(android.media.AudioManager.STREAM_ALARM),
+            am.getStreamVolume(android.media.AudioManager.STREAM_VOICE_CALL)
         ))
     }
 

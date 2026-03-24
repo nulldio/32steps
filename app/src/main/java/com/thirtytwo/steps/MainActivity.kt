@@ -144,7 +144,8 @@ class MainActivity : AppCompatActivity() {
                         prefs.addPreset(Preset(activeProfile, raw,
                             am.getStreamVolume(AudioManager.STREAM_RING),
                             am.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
-                            am.getStreamVolume(AudioManager.STREAM_ALARM)
+                            am.getStreamVolume(AudioManager.STREAM_ALARM),
+                            am.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
                         ))
                         loadPresetGrid()
                     }
@@ -210,7 +211,8 @@ class MainActivity : AppCompatActivity() {
                 prefs.addPreset(Preset(activeProfile, prefs.totalSteps,
                     audioManager.getStreamVolume(AudioManager.STREAM_RING),
                     audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
-                    audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+                    audioManager.getStreamVolume(AudioManager.STREAM_ALARM),
+                    audioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
                 ))
             }
         })
@@ -286,6 +288,7 @@ class MainActivity : AppCompatActivity() {
                         if (preset.ringVolume >= 0) am.setStreamVolume(AudioManager.STREAM_RING, preset.ringVolume, 0)
                         if (preset.notificationVolume >= 0) am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, preset.notificationVolume, 0)
                         if (preset.alarmVolume >= 0) am.setStreamVolume(AudioManager.STREAM_ALARM, preset.alarmVolume, 0)
+                        if (preset.callVolume >= 0) am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, preset.callVolume, 0)
                     } catch (_: Exception) {}
                     val intent = Intent(this@MainActivity, AudioService::class.java)
                     intent.action = AudioService.ACTION_APPLY_PROFILE
@@ -371,7 +374,8 @@ class MainActivity : AppCompatActivity() {
                         val preset = Preset(profile.name, prefs.totalSteps,
                             am.getStreamVolume(AudioManager.STREAM_RING),
                             am.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
-                            am.getStreamVolume(AudioManager.STREAM_ALARM)
+                            am.getStreamVolume(AudioManager.STREAM_ALARM),
+                            am.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
                         )
                         prefs.addPreset(preset)
                         prefs.soundProfile = profile.name
