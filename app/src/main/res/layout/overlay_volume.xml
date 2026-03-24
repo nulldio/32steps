@@ -88,37 +88,80 @@
         android:visibility="gone"
         android:layout_marginTop="16dp">
 
-        <!-- Call -->
+        <!-- Call (shown when not in call) -->
         <LinearLayout
+            android:id="@+id/call_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="6dp">
-            <TextView
-                android:layout_width="0dp"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Call"
-                android:textColor="@color/overlay_text"
-                android:textSize="13sp" />
-            <TextView
-                android:id="@+id/call_counter"
-                android:layout_width="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Call"
+                    android:textColor="@color/overlay_text"
+                    android:textSize="13sp" />
+                <TextView
+                    android:id="@+id/call_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/overlay_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+            <SeekBar
+                android:id="@+id/call_slider"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/overlay_text_secondary"
-                android:textSize="13sp" />
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:progressTint="@color/overlay_text"
+                android:thumbTint="@color/overlay_text"
+                android:progressBackgroundTint="@color/overlay_text_secondary"
+                android:layout_marginBottom="12dp" />
         </LinearLayout>
 
-        <SeekBar
-            android:id="@+id/call_slider"
+        <!-- Media (shown when in call, since main slider becomes Call) -->
+        <LinearLayout
+            android:id="@+id/media_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:progressTint="@color/overlay_text"
-            android:thumbTint="@color/overlay_text"
-            android:progressBackgroundTint="@color/overlay_text_secondary"
-            android:layout_marginBottom="12dp" />
+            android:orientation="vertical"
+            android:visibility="gone">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="6dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Media"
+                    android:textColor="@color/overlay_text"
+                    android:textSize="13sp" />
+                <TextView
+                    android:id="@+id/media_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/overlay_text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+            <SeekBar
+                android:id="@+id/media_slider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:progressTint="@color/overlay_text"
+                android:thumbTint="@color/overlay_text"
+                android:progressBackgroundTint="@color/overlay_text_secondary"
+                android:layout_marginBottom="12dp" />
+        </LinearLayout>
 
         <!-- Ring -->
         <LinearLayout
