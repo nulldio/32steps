@@ -43,6 +43,8 @@ Pick your headphones from 6000+ models and the app corrects the sound based on m
 
 On Android 13+, you may need to allow restricted settings first. Go to **Settings > Apps > 32steps**, tap the three dots in the top right corner, then tap **Allow restricted settings**.
 
+Some antivirus scanners may flag the app due to the accessibility service permission. This is a false positive that affects all accessibility-based apps. The app has no internet permission and cannot send or receive data. You can verify this in the [AndroidManifest.xml](app/src/main/AndroidManifest.xml) where all permissions are declared.
+
 ## Download
 
 Available on [Droid-ify](https://github.com/Droid-ify/client) and [Neo Store](https://github.com/NeoApplications/Neo-Store) (IzzyOnDroid repo is pre-configured), or add the [IzzyOnDroid repo](https://apt.izzysoft.de/fdroid/repo) to the F-Droid client.
