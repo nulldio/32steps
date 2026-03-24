@@ -1,0 +1,1 @@
+Fix volume jumping back when using buttons with screen off.
