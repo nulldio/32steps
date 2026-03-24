@@ -85,6 +85,9 @@ class MainActivity : AppCompatActivity() {
         volumeController.syncFromSystem()
         updateVolumeBar()
         updateStatus()
+        // Refresh stream sliders to match any changes made via overlay
+        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        refreshAppStreamSliders(am)
 
         if (pendingSetup) {
             pendingSetup = false
@@ -285,21 +288,6 @@ class MainActivity : AppCompatActivity() {
                     volumeController.syncFromSystem()
                     updateVolumeBar()
                     refreshPresetHighlights()
-                    // Restore stream volumes - each in own try-catch
-                    val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                    if (preset.ringVolume >= 0) try { am.setStreamVolume(AudioManager.STREAM_RING, preset.ringVolume, 0) } catch (_: Exception) {}
-                    if (preset.notificationVolume >= 0) try { am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, preset.notificationVolume, 0) } catch (_: Exception) {}
-                    if (preset.alarmVolume >= 0) try { am.setStreamVolume(AudioManager.STREAM_ALARM, preset.alarmVolume, 0) } catch (_: Exception) {}
-                    if (preset.callVolume >= 0) try { am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, preset.callVolume, 0) } catch (_: Exception) {}
-                    // Auto-populate volumes for presets that don't have them yet
-                    if (preset.ringVolume < 0 || preset.notificationVolume < 0 || preset.alarmVolume < 0 || preset.callVolume < 0) {
-                        prefs.addPreset(Preset(preset.headphoneName, preset.steps,
-                            am.getStreamVolume(AudioManager.STREAM_RING),
-                            am.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
-                            am.getStreamVolume(AudioManager.STREAM_ALARM),
-                            am.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
-                        ))
-                    }
                     val intent = Intent(this@MainActivity, AudioService::class.java)
                     intent.action = AudioService.ACTION_APPLY_PROFILE
                     startService(intent)
