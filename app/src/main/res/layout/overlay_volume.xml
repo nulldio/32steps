@@ -50,7 +50,7 @@
         android:progressTint="@color/overlay_text"
         android:thumbTint="@color/overlay_text"
         android:progressBackgroundTint="@color/overlay_text_secondary"
-        android:clickable="false"
-        android:focusable="false" />
+        android:clickable="true"
+        android:focusable="true" />
 
 </LinearLayout>

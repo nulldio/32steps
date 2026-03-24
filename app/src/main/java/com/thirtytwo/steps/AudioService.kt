@@ -39,6 +39,9 @@ class AudioService : Service() {
         applySavedProfile()
 
         overlay = VolumeOverlay(this)
+        overlay?.onSeekChanged = { step ->
+            volumeController.setStep(step)
+        }
         volumeController.addStepListener(stepListener)
     }
 
