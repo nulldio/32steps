@@ -10,7 +10,8 @@ data class Preset(
     val steps: Int,
     val ringVolume: Int = -1,
     val notificationVolume: Int = -1,
-    val alarmVolume: Int = -1
+    val alarmVolume: Int = -1,
+    val callVolume: Int = -1
 )
 
 class PrefsManager(context: Context) {
@@ -49,7 +50,8 @@ class PrefsManager(context: Context) {
                 obj.getInt("steps"),
                 obj.optInt("ring", -1),
                 obj.optInt("notif", -1),
-                obj.optInt("alarm", -1)
+                obj.optInt("alarm", -1),
+                obj.optInt("call", -1)
             ))
         }
         return list
@@ -82,6 +84,7 @@ class PrefsManager(context: Context) {
             if (p.ringVolume >= 0) obj.put("ring", p.ringVolume)
             if (p.notificationVolume >= 0) obj.put("notif", p.notificationVolume)
             if (p.alarmVolume >= 0) obj.put("alarm", p.alarmVolume)
+            if (p.callVolume >= 0) obj.put("call", p.callVolume)
             array.put(obj)
         }
         prefs.edit().putString(KEY_PRESETS, array.toString()).apply()
