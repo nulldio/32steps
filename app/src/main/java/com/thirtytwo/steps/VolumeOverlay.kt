@@ -117,6 +117,12 @@ class VolumeOverlay(private val context: Context) {
 
     private fun setupExpandButton() {
         expandBtn?.setOnClickListener {
+            // Check DND access before expanding
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (!nm.isNotificationPolicyAccessGranted) {
+                // Can't open settings from overlay easily, just don't expand
+                return@setOnClickListener
+            }
             isExpanded = !isExpanded
             extraSliders?.visibility = if (isExpanded) View.VISIBLE else View.GONE
             expandBtn?.setImageResource(
@@ -147,7 +153,7 @@ class VolumeOverlay(private val context: Context) {
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    audioManager.setStreamVolume(stream, progress, 0)
+                    try { audioManager.setStreamVolume(stream, progress, 0) } catch (_: Exception) {}
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

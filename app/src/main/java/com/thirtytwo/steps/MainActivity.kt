@@ -170,6 +170,12 @@ class MainActivity : AppCompatActivity() {
         var expanded = false
 
         expandBtn.setOnClickListener {
+            // Request DND access if not granted
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (!nm.isNotificationPolicyAccessGranted) {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                return@setOnClickListener
+            }
             expanded = !expanded
             extraSliders.visibility = if (expanded) View.VISIBLE else View.GONE
             expandBtn.setImageResource(if (expanded) R.drawable.ic_collapse else R.drawable.ic_expand)
@@ -187,7 +193,9 @@ class MainActivity : AppCompatActivity() {
         slider.progress = audioManager.getStreamVolume(stream)
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) audioManager.setStreamVolume(stream, progress, 0)
+                if (fromUser) {
+                    try { audioManager.setStreamVolume(stream, progress, 0) } catch (_: Exception) {}
+                }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
