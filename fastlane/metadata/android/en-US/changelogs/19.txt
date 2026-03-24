@@ -1,0 +1,1 @@
+Show Call label during phone calls. Smart dropdown swaps Call/Media based on active stream.
