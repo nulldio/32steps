@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/overlay_bg"
     android:padding="22dp">
 
+    <!-- Media row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,16 +37,28 @@
             android:layout_height="wrap_content"
             android:text="0/32"
             android:textColor="@color/overlay_text_secondary"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp" />
+
+        <ImageView
+            android:id="@+id/btn_expand"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_expand"
+            app:tint="@color/overlay_text_secondary"
+            android:contentDescription="Expand"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="2dp" />
 
     </LinearLayout>
 
     <SeekBar
         android:id="@+id/step_progress"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:layout_height="wrap_content"
         android:max="32"
         android:progress="16"
         android:progressTint="@color/overlay_text"
@@ -52,5 +66,75 @@
         android:progressBackgroundTint="@color/overlay_text_secondary"
         android:clickable="true"
         android:focusable="true" />
+
+    <!-- Expandable section -->
+    <LinearLayout
+        android:id="@+id/extra_sliders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginTop="16dp">
+
+        <!-- Ring -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ring"
+            android:textColor="@color/overlay_text"
+            android:textSize="13sp"
+            android:layout_marginBottom="6dp" />
+
+        <SeekBar
+            android:id="@+id/ring_slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:progressTint="@color/overlay_text"
+            android:thumbTint="@color/overlay_text"
+            android:progressBackgroundTint="@color/overlay_text_secondary"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Notification -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notification"
+            android:textColor="@color/overlay_text"
+            android:textSize="13sp"
+            android:layout_marginBottom="6dp" />
+
+        <SeekBar
+            android:id="@+id/notification_slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:progressTint="@color/overlay_text"
+            android:thumbTint="@color/overlay_text"
+            android:progressBackgroundTint="@color/overlay_text_secondary"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Alarm -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Alarm"
+            android:textColor="@color/overlay_text"
+            android:textSize="13sp"
+            android:layout_marginBottom="6dp" />
+
+        <SeekBar
+            android:id="@+id/alarm_slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:progressTint="@color/overlay_text"
+            android:thumbTint="@color/overlay_text"
+            android:progressBackgroundTint="@color/overlay_text_secondary" />
+
+    </LinearLayout>
 
 </LinearLayout>
