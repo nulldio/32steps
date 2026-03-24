@@ -13,8 +13,8 @@ android {
         applicationId = "com.thirtytwo.steps"
         minSdk = 26
         targetSdk = 34
-        versionCode = 17
-        versionName = "2.0.7"
+        versionCode = 18
+        versionName = "2.0.8"
     }
 
     androidResources {

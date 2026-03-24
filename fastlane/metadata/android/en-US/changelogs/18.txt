@@ -1,0 +1,1 @@
+Expandable volume panel with Call, Ring, Notification, Alarm sliders. Ringer mode toggle. Draggable overlay slider.
