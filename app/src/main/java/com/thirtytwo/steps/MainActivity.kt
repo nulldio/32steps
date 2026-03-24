@@ -16,8 +16,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityManager
 import android.view.inputmethod.InputMethodManager
+import android.media.AudioManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -62,6 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         setupStepsInput()
         setupVolumeSeekbar()
+        setupStreamSliders()
         setupBtn.setOnClickListener { openNextSetupStep() }
         updateVolumeBar()
         loadPresetGrid()
@@ -158,6 +161,52 @@ class MainActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+    }
+
+    private fun setupStreamSliders() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        val expandBtn = findViewById<ImageView>(R.id.btn_expand_app)
+        val extraSliders = findViewById<View>(R.id.extra_sliders_app)
+        var expanded = false
+
+        expandBtn.setOnClickListener {
+            expanded = !expanded
+            extraSliders.visibility = if (expanded) View.VISIBLE else View.GONE
+            expandBtn.setImageResource(if (expanded) R.drawable.ic_collapse else R.drawable.ic_expand)
+            if (expanded) refreshAppStreamSliders(audioManager)
+        }
+
+        setupAppStreamSlider(R.id.ring_slider_app, AudioManager.STREAM_RING, audioManager)
+        setupAppStreamSlider(R.id.notification_slider_app, AudioManager.STREAM_NOTIFICATION, audioManager)
+        setupAppStreamSlider(R.id.alarm_slider_app, AudioManager.STREAM_ALARM, audioManager)
+    }
+
+    private fun setupAppStreamSlider(id: Int, stream: Int, audioManager: android.media.AudioManager) {
+        val slider = findViewById<SeekBar>(id)
+        slider.max = audioManager.getStreamMaxVolume(stream)
+        slider.progress = audioManager.getStreamVolume(stream)
+        slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) audioManager.setStreamVolume(stream, progress, 0)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
+
+    private fun refreshAppStreamSliders(audioManager: android.media.AudioManager) {
+        findViewById<SeekBar>(R.id.ring_slider_app).apply {
+            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
+            progress = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        }
+        findViewById<SeekBar>(R.id.notification_slider_app).apply {
+            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
+            progress = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION)
+        }
+        findViewById<SeekBar>(R.id.alarm_slider_app).apply {
+            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            progress = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        }
     }
 
     private fun updateVolumeBar() {
