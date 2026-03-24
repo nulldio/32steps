@@ -178,6 +178,7 @@ class VolumeOverlay(private val context: Context) {
         setupStreamSlider(R.id.ring_slider, R.id.ring_counter, AudioManager.STREAM_RING)
         setupStreamSlider(R.id.notification_slider, R.id.notif_counter, AudioManager.STREAM_NOTIFICATION)
         setupStreamSlider(R.id.alarm_slider, R.id.alarm_counter, AudioManager.STREAM_ALARM)
+        setupStreamSlider(R.id.call_slider, R.id.call_counter, AudioManager.STREAM_VOICE_CALL)
     }
 
     private fun setupStreamSlider(sliderId: Int, counterId: Int, stream: Int) {
@@ -204,18 +205,20 @@ class VolumeOverlay(private val context: Context) {
     }
 
     private fun refreshStreamSliders() {
-        overlayView?.findViewById<SeekBar>(R.id.ring_slider)?.apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        refreshOneSlider(R.id.ring_slider, R.id.ring_counter, AudioManager.STREAM_RING)
+        refreshOneSlider(R.id.notification_slider, R.id.notif_counter, AudioManager.STREAM_NOTIFICATION)
+        refreshOneSlider(R.id.alarm_slider, R.id.alarm_counter, AudioManager.STREAM_ALARM)
+        refreshOneSlider(R.id.call_slider, R.id.call_counter, AudioManager.STREAM_VOICE_CALL)
+    }
+
+    private fun refreshOneSlider(sliderId: Int, counterId: Int, stream: Int) {
+        val max = audioManager.getStreamMaxVolume(stream)
+        val current = audioManager.getStreamVolume(stream)
+        overlayView?.findViewById<SeekBar>(sliderId)?.apply {
+            this.max = max
+            progress = current
         }
-        overlayView?.findViewById<SeekBar>(R.id.notification_slider)?.apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION)
-        }
-        overlayView?.findViewById<SeekBar>(R.id.alarm_slider)?.apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
-        }
+        overlayView?.findViewById<TextView>(counterId)?.text = "$current/$max"
     }
 
     fun hide() {
