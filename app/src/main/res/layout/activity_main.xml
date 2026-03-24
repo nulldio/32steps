@@ -72,7 +72,19 @@
                     android:layout_height="wrap_content"
                     android:text="0/32"
                     android:textColor="?colorOnSurfaceVariant"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:layout_marginEnd="8dp" />
+
+                <ImageView
+                    android:id="@+id/btn_expand_app"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_expand"
+                    app:tint="?colorOnSurfaceVariant"
+                    android:contentDescription="Expand"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="2dp" />
 
             </LinearLayout>
 
@@ -87,6 +99,73 @@
                 android:progressTint="?colorOnSurface"
                 android:thumbTint="?colorOnSurface"
                 android:progressBackgroundTint="?colorOnSurfaceVariant" />
+
+            <!-- Expandable stream sliders -->
+            <LinearLayout
+                android:id="@+id/extra_sliders_app"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ring"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="6dp" />
+
+                <SeekBar
+                    android:id="@+id/ring_slider_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:progressTint="?colorOnSurface"
+                    android:thumbTint="?colorOnSurface"
+                    android:progressBackgroundTint="?colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Notification"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="6dp" />
+
+                <SeekBar
+                    android:id="@+id/notification_slider_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:progressTint="?colorOnSurface"
+                    android:thumbTint="?colorOnSurface"
+                    android:progressBackgroundTint="?colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Alarm"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="6dp" />
+
+                <SeekBar
+                    android:id="@+id/alarm_slider_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:progressTint="?colorOnSurface"
+                    android:thumbTint="?colorOnSurface"
+                    android:progressBackgroundTint="?colorOnSurfaceVariant" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
