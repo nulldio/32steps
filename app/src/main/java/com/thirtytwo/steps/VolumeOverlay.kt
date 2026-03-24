@@ -90,6 +90,10 @@ class VolumeOverlay(private val context: Context) {
                 seekBar?.progress = currentStep
                 stepText?.text = "$currentStep/$totalSteps"
                 mediaLabel?.text = streamLabel
+                // Swap Call/Media in dropdown based on active stream
+                val inCall = streamLabel == "Call"
+                overlayView?.findViewById<View>(R.id.call_section)?.visibility = if (inCall) View.GONE else View.VISIBLE
+                overlayView?.findViewById<View>(R.id.media_section)?.visibility = if (inCall) View.VISIBLE else View.GONE
             }
 
             if (!isDragging && !isExpanded) {
@@ -180,10 +184,11 @@ class VolumeOverlay(private val context: Context) {
     }
 
     private fun setupStreamSliders() {
+        setupStreamSlider(R.id.call_slider, R.id.call_counter, AudioManager.STREAM_VOICE_CALL)
+        setupStreamSlider(R.id.media_slider, R.id.media_counter, AudioManager.STREAM_MUSIC)
         setupStreamSlider(R.id.ring_slider, R.id.ring_counter, AudioManager.STREAM_RING)
         setupStreamSlider(R.id.notification_slider, R.id.notif_counter, AudioManager.STREAM_NOTIFICATION)
         setupStreamSlider(R.id.alarm_slider, R.id.alarm_counter, AudioManager.STREAM_ALARM)
-        setupStreamSlider(R.id.call_slider, R.id.call_counter, AudioManager.STREAM_VOICE_CALL)
     }
 
     private fun setupStreamSlider(sliderId: Int, counterId: Int, stream: Int) {
