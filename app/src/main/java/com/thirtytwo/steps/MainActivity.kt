@@ -282,7 +282,7 @@ class MainActivity : AppCompatActivity() {
                     volumeController.syncFromSystem()
                     updateVolumeBar()
                     refreshPresetHighlights()
-                    // Restore stream volumes
+                    // Restore stream volumes or populate missing ones
                     val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                     try {
                         if (preset.ringVolume >= 0) am.setStreamVolume(AudioManager.STREAM_RING, preset.ringVolume, 0)
@@ -290,6 +290,15 @@ class MainActivity : AppCompatActivity() {
                         if (preset.alarmVolume >= 0) am.setStreamVolume(AudioManager.STREAM_ALARM, preset.alarmVolume, 0)
                         if (preset.callVolume >= 0) am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, preset.callVolume, 0)
                     } catch (_: Exception) {}
+                    // Auto-populate volumes for presets that don't have them yet
+                    if (preset.ringVolume < 0 || preset.notificationVolume < 0 || preset.alarmVolume < 0 || preset.callVolume < 0) {
+                        prefs.addPreset(Preset(preset.headphoneName, preset.steps,
+                            am.getStreamVolume(AudioManager.STREAM_RING),
+                            am.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
+                            am.getStreamVolume(AudioManager.STREAM_ALARM),
+                            am.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
+                        ))
+                    }
                     val intent = Intent(this@MainActivity, AudioService::class.java)
                     intent.action = AudioService.ACTION_APPLY_PROFILE
                     startService(intent)
