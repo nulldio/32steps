@@ -24,6 +24,7 @@
             android:tint="@color/overlay_text" />
 
         <TextView
+            android:id="@+id/stream_label"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

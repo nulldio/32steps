@@ -57,7 +57,9 @@ class VolumeOverlay(private val context: Context) {
         }
     }
 
-    fun show(currentStep: Int, totalSteps: Int) {
+    private var mediaLabel: android.widget.TextView? = null
+
+    fun show(currentStep: Int, totalSteps: Int, streamLabel: String = "Media") {
         handler.post {
             hideRunnable?.let { handler.removeCallbacks(it) }
 
@@ -66,6 +68,7 @@ class VolumeOverlay(private val context: Context) {
                 overlayView = inflater.inflate(R.layout.overlay_volume, null)
                 seekBar = overlayView?.findViewById(R.id.step_progress)
                 stepText = overlayView?.findViewById(R.id.step_text)
+                mediaLabel = overlayView?.findViewById(R.id.stream_label)
                 expandBtn = overlayView?.findViewById(R.id.btn_expand)
                 extraSliders = overlayView?.findViewById(R.id.extra_sliders)
 
@@ -86,6 +89,7 @@ class VolumeOverlay(private val context: Context) {
                 seekBar?.max = totalSteps
                 seekBar?.progress = currentStep
                 stepText?.text = "$currentStep/$totalSteps"
+                mediaLabel?.text = streamLabel
             }
 
             if (!isDragging && !isExpanded) {

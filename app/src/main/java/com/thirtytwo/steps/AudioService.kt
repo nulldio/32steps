@@ -18,7 +18,16 @@ class AudioService : Service() {
     private var overlay: VolumeOverlay? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
-        if (!appInForeground) overlay?.show(step, total)
+        if (!appInForeground) {
+            val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            val label = when (am.mode) {
+                android.media.AudioManager.MODE_IN_CALL,
+                android.media.AudioManager.MODE_IN_COMMUNICATION -> "Call"
+                android.media.AudioManager.MODE_RINGTONE -> "Ring"
+                else -> "Media"
+            }
+            overlay?.show(step, total, label)
+        }
     }
 
     override fun onCreate() {
