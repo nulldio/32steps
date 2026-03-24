@@ -136,11 +136,32 @@ class VolumeController(private val context: Context) {
     }
 
     fun stepUp(): Int {
+        val stream = activeStream()
+        if (stream != AudioManager.STREAM_MUSIC) {
+            // Non-music: step through system levels directly
+            val current = audioManager.getStreamVolume(stream)
+            val max = audioManager.getStreamMaxVolume(stream)
+            val newVol = (current + 1).coerceAtMost(max)
+            setSystemVolume(stream, newVol)
+            currentStep = (newVol.toFloat() / max * totalSteps).roundToInt().coerceIn(0, totalSteps)
+            notifyStepChanged()
+            return currentStep
+        }
         setStep(currentStep + 1)
         return currentStep
     }
 
     fun stepDown(): Int {
+        val stream = activeStream()
+        if (stream != AudioManager.STREAM_MUSIC) {
+            val current = audioManager.getStreamVolume(stream)
+            val max = audioManager.getStreamMaxVolume(stream)
+            val newVol = (current - 1).coerceAtLeast(0)
+            setSystemVolume(stream, newVol)
+            currentStep = (newVol.toFloat() / max * totalSteps).roundToInt().coerceIn(0, totalSteps)
+            notifyStepChanged()
+            return currentStep
+        }
         setStep(currentStep - 1)
         return currentStep
     }
@@ -154,15 +175,6 @@ class VolumeController(private val context: Context) {
         if (newStep == 0) {
             setSystemVolume(stream, 0)
             setAllGain(0)
-            notifyStepChanged()
-            return
-        }
-
-        // Non-music streams: map linearly to system steps, no EQ
-        if (stream != AudioManager.STREAM_MUSIC) {
-            val sysMax = audioManager.getStreamMaxVolume(stream)
-            val sysVol = (newStep.toFloat() / totalSteps * sysMax).roundToInt().coerceIn(0, sysMax)
-            setSystemVolume(stream, sysVol)
             notifyStepChanged()
             return
         }

@@ -188,20 +188,25 @@ class MainActivity : AppCompatActivity() {
             if (expanded) refreshAppStreamSliders(audioManager)
         }
 
-        setupAppStreamSlider(R.id.ring_slider_app, AudioManager.STREAM_RING, audioManager)
-        setupAppStreamSlider(R.id.notification_slider_app, AudioManager.STREAM_NOTIFICATION, audioManager)
-        setupAppStreamSlider(R.id.alarm_slider_app, AudioManager.STREAM_ALARM, audioManager)
-        setupAppStreamSlider(R.id.call_slider_app, AudioManager.STREAM_VOICE_CALL, audioManager)
+        setupAppStreamSlider(R.id.ring_slider_app, R.id.ring_counter_app, AudioManager.STREAM_RING, audioManager)
+        setupAppStreamSlider(R.id.notification_slider_app, R.id.notif_counter_app, AudioManager.STREAM_NOTIFICATION, audioManager)
+        setupAppStreamSlider(R.id.alarm_slider_app, R.id.alarm_counter_app, AudioManager.STREAM_ALARM, audioManager)
+        setupAppStreamSlider(R.id.call_slider_app, R.id.call_counter_app, AudioManager.STREAM_VOICE_CALL, audioManager)
     }
 
-    private fun setupAppStreamSlider(id: Int, stream: Int, audioManager: android.media.AudioManager) {
-        val slider = findViewById<SeekBar>(id)
-        slider.max = audioManager.getStreamMaxVolume(stream)
-        slider.progress = audioManager.getStreamVolume(stream)
+    private fun setupAppStreamSlider(sliderId: Int, counterId: Int, stream: Int, audioManager: android.media.AudioManager) {
+        val slider = findViewById<SeekBar>(sliderId)
+        val counter = findViewById<TextView>(counterId)
+        val max = audioManager.getStreamMaxVolume(stream)
+        val current = audioManager.getStreamVolume(stream)
+        slider.max = max
+        slider.progress = current
+        counter.text = "$current/$max"
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
                     try { audioManager.setStreamVolume(stream, progress, 0) } catch (_: Exception) {}
+                    counter.text = "$progress/$max"
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -219,22 +224,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshAppStreamSliders(audioManager: android.media.AudioManager) {
-        findViewById<SeekBar>(R.id.ring_slider_app).apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+        refreshOneAppSlider(R.id.ring_slider_app, R.id.ring_counter_app, AudioManager.STREAM_RING, audioManager)
+        refreshOneAppSlider(R.id.notification_slider_app, R.id.notif_counter_app, AudioManager.STREAM_NOTIFICATION, audioManager)
+        refreshOneAppSlider(R.id.alarm_slider_app, R.id.alarm_counter_app, AudioManager.STREAM_ALARM, audioManager)
+        refreshOneAppSlider(R.id.call_slider_app, R.id.call_counter_app, AudioManager.STREAM_VOICE_CALL, audioManager)
+    }
+
+    private fun refreshOneAppSlider(sliderId: Int, counterId: Int, stream: Int, audioManager: android.media.AudioManager) {
+        val max = audioManager.getStreamMaxVolume(stream)
+        val current = audioManager.getStreamVolume(stream)
+        findViewById<SeekBar>(sliderId).apply {
+            this.max = max
+            progress = current
         }
-        findViewById<SeekBar>(R.id.notification_slider_app).apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION)
-        }
-        findViewById<SeekBar>(R.id.alarm_slider_app).apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
-        }
-        findViewById<SeekBar>(R.id.call_slider_app).apply {
-            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL)
-            progress = audioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
-        }
+        findViewById<TextView>(counterId).text = "$current/$max"
     }
 
     private fun updateVolumeBar() {
