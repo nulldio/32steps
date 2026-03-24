@@ -140,20 +140,25 @@ class VolumeOverlay(private val context: Context) {
     }
 
     private fun setupStreamSliders() {
-        setupStreamSlider(R.id.ring_slider, AudioManager.STREAM_RING)
-        setupStreamSlider(R.id.notification_slider, AudioManager.STREAM_NOTIFICATION)
-        setupStreamSlider(R.id.alarm_slider, AudioManager.STREAM_ALARM)
+        setupStreamSlider(R.id.ring_slider, R.id.ring_counter, AudioManager.STREAM_RING)
+        setupStreamSlider(R.id.notification_slider, R.id.notif_counter, AudioManager.STREAM_NOTIFICATION)
+        setupStreamSlider(R.id.alarm_slider, R.id.alarm_counter, AudioManager.STREAM_ALARM)
     }
 
-    private fun setupStreamSlider(id: Int, stream: Int) {
-        val slider = overlayView?.findViewById<SeekBar>(id) ?: return
-        slider.max = audioManager.getStreamMaxVolume(stream)
-        slider.progress = audioManager.getStreamVolume(stream)
+    private fun setupStreamSlider(sliderId: Int, counterId: Int, stream: Int) {
+        val slider = overlayView?.findViewById<SeekBar>(sliderId) ?: return
+        val counter = overlayView?.findViewById<TextView>(counterId)
+        val max = audioManager.getStreamMaxVolume(stream)
+        val current = audioManager.getStreamVolume(stream)
+        slider.max = max
+        slider.progress = current
+        counter?.text = "$current/$max"
 
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
                     try { audioManager.setStreamVolume(stream, progress, 0) } catch (_: Exception) {}
+                    counter?.text = "$progress/$max"
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

@@ -7,7 +7,10 @@ import org.json.JSONObject
 
 data class Preset(
     val headphoneName: String,
-    val steps: Int
+    val steps: Int,
+    val ringVolume: Int = -1,
+    val notificationVolume: Int = -1,
+    val alarmVolume: Int = -1
 )
 
 class PrefsManager(context: Context) {
@@ -41,7 +44,13 @@ class PrefsManager(context: Context) {
         val list = mutableListOf<Preset>()
         for (i in 0 until array.length()) {
             val obj = array.getJSONObject(i)
-            list.add(Preset(obj.getString("name"), obj.getInt("steps")))
+            list.add(Preset(
+                obj.getString("name"),
+                obj.getInt("steps"),
+                obj.optInt("ring", -1),
+                obj.optInt("notif", -1),
+                obj.optInt("alarm", -1)
+            ))
         }
         return list
     }
@@ -70,6 +79,9 @@ class PrefsManager(context: Context) {
             val obj = JSONObject()
             obj.put("name", p.headphoneName)
             obj.put("steps", p.steps)
+            if (p.ringVolume >= 0) obj.put("ring", p.ringVolume)
+            if (p.notificationVolume >= 0) obj.put("notif", p.notificationVolume)
+            if (p.alarmVolume >= 0) obj.put("alarm", p.alarmVolume)
             array.put(obj)
         }
         prefs.edit().putString(KEY_PRESETS, array.toString()).apply()
