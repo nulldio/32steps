@@ -190,6 +190,7 @@ class MainActivity : AppCompatActivity() {
         setupAppStreamSlider(R.id.ring_slider_app, AudioManager.STREAM_RING, audioManager)
         setupAppStreamSlider(R.id.notification_slider_app, AudioManager.STREAM_NOTIFICATION, audioManager)
         setupAppStreamSlider(R.id.alarm_slider_app, AudioManager.STREAM_ALARM, audioManager)
+        setupAppStreamSlider(R.id.call_slider_app, AudioManager.STREAM_VOICE_CALL, audioManager)
     }
 
     private fun setupAppStreamSlider(id: Int, stream: Int, audioManager: android.media.AudioManager) {
@@ -227,6 +228,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<SeekBar>(R.id.alarm_slider_app).apply {
             max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
             progress = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        }
+        findViewById<SeekBar>(R.id.call_slider_app).apply {
+            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL)
+            progress = audioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
         }
     }
 

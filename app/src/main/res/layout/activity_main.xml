@@ -163,6 +163,25 @@
                     android:paddingEnd="8dp"
                     android:progressTint="?colorOnSurface"
                     android:thumbTint="?colorOnSurface"
+                    android:progressBackgroundTint="?colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Call"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="6dp" />
+
+                <SeekBar
+                    android:id="@+id/call_slider_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:progressTint="?colorOnSurface"
+                    android:thumbTint="?colorOnSurface"
                     android:progressBackgroundTint="?colorOnSurfaceVariant" />
 
             </LinearLayout>
