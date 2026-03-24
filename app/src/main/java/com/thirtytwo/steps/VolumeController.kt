@@ -58,13 +58,19 @@ class VolumeController(private val context: Context) {
     private val volumeObserver = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) {
             if (selfChanging) return
-            // Only react to changes on the active stream
             val stream = activeStream()
             if (stream != AudioManager.STREAM_MUSIC) return
             val sysVol = audioManager.getStreamVolume(stream)
             if (sysVol != lastSystemVol) {
                 lastSystemVol = sysVol
-                syncFromSystem()
+                // Only update internal state - never re-set system volume
+                if (sysVol == 0) {
+                    currentStep = 0
+                } else {
+                    val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
+                    currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
+                }
+                setAllGain(gainOffsetForStep(currentStep))
                 notifyStepChanged()
             }
         }
