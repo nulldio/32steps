@@ -1,5 +1,10 @@
 # 32steps
 
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/com.thirtytwo.steps)
+
+[![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.thirtytwo.steps&label=IzzyOnDroid)](https://apt.izzysoft.de/packages/com.thirtytwo.steps)
+[![RB Status](https://shields.rbtlog.dev/simple/com.thirtytwo.steps?style=for-the-badge)](https://shields.rbtlog.dev/com.thirtytwo.steps)
+
 Override Android's default volume steps. Set your own custom step count (1-1000). No root required. Includes 6000+ headphone sound profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq), updated automatically.
 
 <p float="left">
@@ -38,7 +43,9 @@ On Android 13+, you may need to allow restricted settings first. Go to **Setting
 
 ## Download
 
-Grab the latest APK from the [Releases](https://github.com/nulldio/32steps/releases) page.
+Available on [Droid-ify](https://github.com/Droid-ify/client) and [Neo Store](https://github.com/NeoApplications/Neo-Store) (IzzyOnDroid repo is pre-configured), or add the [IzzyOnDroid repo](https://apt.izzysoft.de/fdroid/repo) to the F-Droid client.
+
+You can also grab the APK directly from the [Releases](https://github.com/nulldio/32steps/releases) page.
 
 ## Building from source
 
