@@ -3,7 +3,8 @@
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">](https://apt.izzysoft.de/packages/com.thirtytwo.steps)
 
 [![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.thirtytwo.steps&label=IzzyOnDroid)](https://apt.izzysoft.de/packages/com.thirtytwo.steps)
-[![RB Status](https://shields.rbtlog.dev/simple/com.thirtytwo.steps)](https://shields.rbtlog.dev/com.thirtytwo.steps)
+[![RB Status](https://shields.rbtlog.dev/simple/com.thirtytwo.steps?style=for-the-badge)](https://shields.rbtlog.dev/com.thirtytwo.steps)
+[![IzzyOnDroid Yearly Downloads](https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['com.thirtytwo.steps']&label=IzzyOnDroid%20yearly%20downloads)](https://apt.izzysoft.de/packages/com.thirtytwo.steps)
 
 Override Android's default volume steps. Set your own custom step count (1-1000). No root required. Includes 6000+ headphone sound profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq), updated automatically.
 
