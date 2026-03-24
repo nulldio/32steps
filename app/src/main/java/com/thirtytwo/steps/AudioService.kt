@@ -41,6 +41,9 @@ class AudioService : Service() {
         overlay?.onSeekChanged = { step ->
             volumeController.setStep(step)
         }
+        overlay?.onStreamChanged = {
+            saveStreamVolumesToPreset()
+        }
         volumeController.addStepListener(stepListener)
     }
 
@@ -67,6 +70,16 @@ class AudioService : Service() {
         val profileName = prefs.soundProfile ?: return
         val profile = profileManager.findProfile(profileName) ?: return
         volumeController.setSoundProfile(profile)
+    }
+
+    private fun saveStreamVolumesToPreset() {
+        val activeProfile = prefs.soundProfile ?: return
+        val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        prefs.addPreset(Preset(activeProfile, prefs.totalSteps,
+            am.getStreamVolume(android.media.AudioManager.STREAM_RING),
+            am.getStreamVolume(android.media.AudioManager.STREAM_NOTIFICATION),
+            am.getStreamVolume(android.media.AudioManager.STREAM_ALARM)
+        ))
     }
 
     override fun onDestroy() {

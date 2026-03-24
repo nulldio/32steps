@@ -33,6 +33,7 @@ class VolumeOverlay(private val context: Context) {
     private var isExpanded = false
 
     var onSeekChanged: ((Int) -> Unit)? = null
+    var onStreamChanged: (() -> Unit)? = null
 
     private fun buildLayoutParams(): WindowManager.LayoutParams {
         val displayMetrics = context.resources.displayMetrics
@@ -200,7 +201,9 @@ class VolumeOverlay(private val context: Context) {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
                 hideRunnable?.let { handler.removeCallbacks(it) }
             }
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                onStreamChanged?.invoke()
+            }
         })
     }
 
