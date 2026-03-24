@@ -137,10 +137,15 @@ class MainActivity : AppCompatActivity() {
                     prefs.totalSteps = raw
                     volumeController.syncFromSystem()
                     updateVolumeBar()
-                    // Update active preset's step count
+                    // Update active preset
                     val activeProfile = prefs.soundProfile
                     if (activeProfile != null) {
-                        prefs.addPreset(Preset(activeProfile, raw))
+                        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        prefs.addPreset(Preset(activeProfile, raw,
+                            am.getStreamVolume(AudioManager.STREAM_RING),
+                            am.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
+                            am.getStreamVolume(AudioManager.STREAM_ALARM)
+                        ))
                         loadPresetGrid()
                     }
                 }
@@ -198,7 +203,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // Auto-save to active preset
+                val activeProfile = prefs.soundProfile ?: return
+                prefs.addPreset(Preset(activeProfile, prefs.totalSteps,
+                    audioManager.getStreamVolume(AudioManager.STREAM_RING),
+                    audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
+                    audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+                ))
+            }
         })
     }
 
@@ -262,6 +275,13 @@ class MainActivity : AppCompatActivity() {
                     volumeController.syncFromSystem()
                     updateVolumeBar()
                     refreshPresetHighlights()
+                    // Restore stream volumes
+                    val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    try {
+                        if (preset.ringVolume >= 0) am.setStreamVolume(AudioManager.STREAM_RING, preset.ringVolume, 0)
+                        if (preset.notificationVolume >= 0) am.setStreamVolume(AudioManager.STREAM_NOTIFICATION, preset.notificationVolume, 0)
+                        if (preset.alarmVolume >= 0) am.setStreamVolume(AudioManager.STREAM_ALARM, preset.alarmVolume, 0)
+                    } catch (_: Exception) {}
                     val intent = Intent(this@MainActivity, AudioService::class.java)
                     intent.action = AudioService.ACTION_APPLY_PROFILE
                     startService(intent)
@@ -342,7 +362,12 @@ class MainActivity : AppCompatActivity() {
                     item.findViewById<TextView>(R.id.preset_name).text = profile.name
                     item.findViewById<TextView>(R.id.preset_steps).text = profile.category
                     item.setOnClickListener {
-                        val preset = Preset(profile.name, prefs.totalSteps)
+                        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        val preset = Preset(profile.name, prefs.totalSteps,
+                            am.getStreamVolume(AudioManager.STREAM_RING),
+                            am.getStreamVolume(AudioManager.STREAM_NOTIFICATION),
+                            am.getStreamVolume(AudioManager.STREAM_ALARM)
+                        )
                         prefs.addPreset(preset)
                         prefs.soundProfile = profile.name
                         loadPresetGrid()

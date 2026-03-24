@@ -77,13 +77,25 @@
         android:layout_marginTop="16dp">
 
         <!-- Ring -->
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ring"
-            android:textColor="@color/overlay_text"
-            android:textSize="13sp"
-            android:layout_marginBottom="6dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Ring"
+                android:textColor="@color/overlay_text"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/ring_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/overlay_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <SeekBar
             android:id="@+id/ring_slider"
@@ -97,13 +109,25 @@
             android:layout_marginBottom="12dp" />
 
         <!-- Notification -->
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Notification"
-            android:textColor="@color/overlay_text"
-            android:textSize="13sp"
-            android:layout_marginBottom="6dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Notification"
+                android:textColor="@color/overlay_text"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/notif_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/overlay_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <SeekBar
             android:id="@+id/notification_slider"
@@ -117,13 +141,25 @@
             android:layout_marginBottom="12dp" />
 
         <!-- Alarm -->
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Alarm"
-            android:textColor="@color/overlay_text"
-            android:textSize="13sp"
-            android:layout_marginBottom="6dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Alarm"
+                android:textColor="@color/overlay_text"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/alarm_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/overlay_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <SeekBar
             android:id="@+id/alarm_slider"
