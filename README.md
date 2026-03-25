@@ -43,7 +43,7 @@ Pick your headphones from 6000+ models and the app corrects the sound based on m
 
 On Android 13+, you may need to allow restricted settings first. Go to **Settings > Apps > 32steps**, tap the three dots in the top right corner, then tap **Allow restricted settings**.
 
-Some antivirus scanners may flag the app due to the accessibility service. This is a [known false positive](https://codeberg.org/IzzyOnDroid/repodata/issues/75) - the app has no internet permission.
+Some antivirus scanners may flag the app due to the accessibility service. This is a known false positive - [the app has no internet permission](https://codeberg.org/IzzyOnDroid/repodata/issues/75#issuecomment-11994243).
 
 ## Download
 
