@@ -66,9 +66,11 @@ class MainActivity : AppCompatActivity() {
         setupVolumeSeekbar()
         setupStreamSliders()
         setupBtn.setOnClickListener { openNextSetupStep() }
-        findViewById<android.view.View>(R.id.btn_settings).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
+        // Settings button - uncomment when settings page has content
+        // findViewById<android.view.View>(R.id.btn_settings).setOnClickListener {
+        //     startActivity(Intent(this, SettingsActivity::class.java))
+        // }
+        findViewById<android.view.View>(R.id.btn_settings).visibility = android.view.View.GONE
         updateVolumeBar()
         loadPresetGrid()
 
