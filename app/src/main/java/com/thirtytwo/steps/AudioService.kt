@@ -17,16 +17,24 @@ class AudioService : Service() {
     private lateinit var profileManager: SoundProfileManager
     private var overlay: VolumeOverlay? = null
 
+    private val overlayHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var pendingOverlayShow: Runnable? = null
+
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         if (!appInForeground) {
-            val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-            val label = when (am.mode) {
-                android.media.AudioManager.MODE_IN_CALL,
-                android.media.AudioManager.MODE_IN_COMMUNICATION -> "Call"
-                android.media.AudioManager.MODE_RINGTONE -> "Ring"
-                else -> "Media"
+            // Cancel any pending show and schedule a new one
+            pendingOverlayShow?.let { overlayHandler.removeCallbacks(it) }
+            pendingOverlayShow = Runnable {
+                val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                val label = when (am.mode) {
+                    android.media.AudioManager.MODE_IN_CALL,
+                    android.media.AudioManager.MODE_IN_COMMUNICATION -> "Call"
+                    android.media.AudioManager.MODE_RINGTONE -> "Ring"
+                    else -> "Media"
+                }
+                overlay?.show(step, total, label)
             }
-            overlay?.show(step, total, label)
+            overlayHandler.postDelayed(pendingOverlayShow!!, 150)
         }
     }
 
