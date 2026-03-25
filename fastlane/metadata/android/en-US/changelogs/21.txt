@@ -1,0 +1,1 @@
+Increase overlay delay for better screenshot compatibility.

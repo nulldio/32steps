@@ -34,12 +34,12 @@ class AudioService : Service() {
                 pendingOverlayShow?.let { overlayHandler.removeCallbacks(it) }
                 overlay?.show(step, total, label)
             } else {
-                // First show - delay 150ms to avoid screenshot capture
+                // First show - delay to avoid screenshot capture
                 pendingOverlayShow?.let { overlayHandler.removeCallbacks(it) }
                 pendingOverlayShow = Runnable {
                     overlay?.show(step, total, label)
                 }
-                overlayHandler.postDelayed(pendingOverlayShow!!, 150)
+                overlayHandler.postDelayed(pendingOverlayShow!!, 300)
             }
         }
     }
