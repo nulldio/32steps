@@ -1,0 +1,1 @@
+Fix volume repeat getting stuck when pressing other buttons. Reduce overlay visibility in screenshots.
