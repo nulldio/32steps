@@ -29,6 +29,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThirtyTwoSteps">
+        </activity>
+
         <service
             android:name=".VolumeAccessibilityService"
             android:exported="true"
