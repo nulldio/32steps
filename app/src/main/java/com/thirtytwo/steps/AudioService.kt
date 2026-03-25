@@ -22,19 +22,25 @@ class AudioService : Service() {
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         if (!appInForeground) {
-            // Cancel any pending show and schedule a new one
-            pendingOverlayShow?.let { overlayHandler.removeCallbacks(it) }
-            pendingOverlayShow = Runnable {
-                val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-                val label = when (am.mode) {
-                    android.media.AudioManager.MODE_IN_CALL,
-                    android.media.AudioManager.MODE_IN_COMMUNICATION -> "Call"
-                    android.media.AudioManager.MODE_RINGTONE -> "Ring"
-                    else -> "Media"
-                }
-                overlay?.show(step, total, label)
+            val am = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            val label = when (am.mode) {
+                android.media.AudioManager.MODE_IN_CALL,
+                android.media.AudioManager.MODE_IN_COMMUNICATION -> "Call"
+                android.media.AudioManager.MODE_RINGTONE -> "Ring"
+                else -> "Media"
             }
-            overlayHandler.postDelayed(pendingOverlayShow!!, 150)
+            if (overlay?.isCurrentlyShowing() == true) {
+                // Already visible - update immediately
+                pendingOverlayShow?.let { overlayHandler.removeCallbacks(it) }
+                overlay?.show(step, total, label)
+            } else {
+                // First show - delay 150ms to avoid screenshot capture
+                pendingOverlayShow?.let { overlayHandler.removeCallbacks(it) }
+                pendingOverlayShow = Runnable {
+                    overlay?.show(step, total, label)
+                }
+                overlayHandler.postDelayed(pendingOverlayShow!!, 150)
+            }
         }
     }
 
