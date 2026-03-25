@@ -28,7 +28,10 @@ class VolumeOverlay(private val context: Context) {
     private var expandBtn: ImageView? = null
     private var extraSliders: View? = null
     private var hideRunnable: Runnable? = null
-    private var isShowing = false
+    var isShowing = false
+        private set
+
+    fun isCurrentlyShowing(): Boolean = isShowing
     private var isDragging = false
     private var isExpanded = false
 
