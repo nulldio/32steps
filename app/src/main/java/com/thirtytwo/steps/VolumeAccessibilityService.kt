@@ -26,8 +26,9 @@ class VolumeAccessibilityService : AccessibilityService() {
 
     private val repeatRunnable = object : Runnable {
         override fun run() {
-            // Safety: if no ACTION_DOWN received in 500ms, assume key was released
-            if (System.currentTimeMillis() - lastActionDownTime > 500) {
+            // Safety: if screen is no longer interactive (power pressed), stop repeating
+            val pm = getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+            if (!pm.isInteractive) {
                 holdingKey = null
                 return
             }
