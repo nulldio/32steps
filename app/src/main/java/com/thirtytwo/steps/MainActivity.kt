@@ -66,6 +66,9 @@ class MainActivity : AppCompatActivity() {
         setupVolumeSeekbar()
         setupStreamSliders()
         setupBtn.setOnClickListener { openNextSetupStep() }
+        findViewById<android.view.View>(R.id.btn_settings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
         updateVolumeBar()
         loadPresetGrid()
 

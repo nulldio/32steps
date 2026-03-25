@@ -16,15 +16,21 @@ class VolumeAccessibilityService : AccessibilityService() {
     // Hold-to-repeat state
     private var holdingKey: Int? = null
     private var repeatCount = 0
+    private var lastActionDownTime = 0L
 
     // Initial delay before repeat starts, then accelerates
     private val initialRepeatDelayMs = 400L
     private val repeatIntervalMs = 80L
     private val fastRepeatIntervalMs = 40L
-    private val fastRepeatAfter = 8 // switch to fast after this many repeats
+    private val fastRepeatAfter = 8
 
     private val repeatRunnable = object : Runnable {
         override fun run() {
+            // Safety: if no ACTION_DOWN received in 500ms, assume key was released
+            if (System.currentTimeMillis() - lastActionDownTime > 500) {
+                holdingKey = null
+                return
+            }
             holdingKey?.let { key ->
                 when (key) {
                     KeyEvent.KEYCODE_VOLUME_UP -> volumeController.stepUp()
@@ -56,8 +62,8 @@ class VolumeAccessibilityService : AccessibilityService() {
 
         when (event.action) {
             KeyEvent.ACTION_DOWN -> {
+                lastActionDownTime = System.currentTimeMillis()
                 if (holdingKey == null) {
-                    // First press — step immediately and start repeat timer
                     holdingKey = event.keyCode
                     repeatCount = 0
                     when (event.keyCode) {
@@ -68,7 +74,6 @@ class VolumeAccessibilityService : AccessibilityService() {
                 }
             }
             KeyEvent.ACTION_UP -> {
-                // Stop repeating
                 holdingKey = null
                 handler.removeCallbacks(repeatRunnable)
             }

@@ -17,15 +17,35 @@
     android:focusable="true"
     android:focusableInTouchMode="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Volume"
-        android:textColor="?colorOnSurface"
-        android:textSize="20sp"
-        android:fontFamily="sans-serif"
-        android:layout_marginBottom="12dp"
-        android:layout_marginStart="6dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Volume"
+            android:textColor="?colorOnSurface"
+            android:textSize="20sp"
+            android:fontFamily="sans-serif"
+            android:layout_marginStart="6dp" />
+
+        <ImageView
+            android:id="@+id/btn_settings"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_settings"
+            app:tint="?colorOnSurfaceVariant"
+            android:contentDescription="Settings"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="6dp" />
+
+    </LinearLayout>
 
     <!-- Volume control card -->
     <com.google.android.material.card.MaterialCardView
