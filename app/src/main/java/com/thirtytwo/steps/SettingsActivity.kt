@@ -14,11 +14,11 @@ class SettingsActivity : AppCompatActivity() {
 
         prefs = PrefsManager(this)
 
-        val hideScreenshots = findViewById<MaterialSwitch>(R.id.switch_hide_screenshots)
-        hideScreenshots.isChecked = prefs.hideFromScreenshots
+        val hideOverlay = findViewById<MaterialSwitch>(R.id.switch_hide_overlay)
+        hideOverlay.isChecked = prefs.hideOverlay
 
-        hideScreenshots.setOnCheckedChangeListener { _, isChecked ->
-            prefs.hideFromScreenshots = isChecked
+        hideOverlay.setOnCheckedChangeListener { _, isChecked ->
+            prefs.hideOverlay = isChecked
         }
     }
 }

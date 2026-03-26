@@ -25,7 +25,7 @@
         android:layout_marginBottom="20dp"
         android:layout_marginStart="6dp" />
 
-    <!-- Hide overlay from screenshots -->
+    <!-- Hide overlay -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -54,14 +54,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Hide overlay from screenshots"
+                    android:text="Hide volume overlay"
                     android:textColor="?colorOnSurface"
                     android:textSize="15sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Prevents volume bar from appearing in screen captures"
+                    android:text="Volume buttons still work, overlay won't appear"
                     android:textColor="?colorOnSurfaceVariant"
                     android:textSize="12sp"
                     android:layout_marginTop="4dp" />
@@ -69,7 +69,7 @@
             </LinearLayout>
 
             <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/switch_hide_screenshots"
+                android:id="@+id/switch_hide_overlay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
