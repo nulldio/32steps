@@ -39,6 +39,10 @@ class PrefsManager(context: Context) {
         get() = prefs.getBoolean(KEY_HIDE_SCREENSHOTS, false)
         set(value) = prefs.edit().putBoolean(KEY_HIDE_SCREENSHOTS, value).apply()
 
+    var hideOverlay: Boolean
+        get() = prefs.getBoolean(KEY_HIDE_OVERLAY, false)
+        set(value) = prefs.edit().putBoolean(KEY_HIDE_OVERLAY, value).apply()
+
     var soundProfile: String?
         get() = prefs.getString(KEY_SOUND_PROFILE, null)
         set(value) = prefs.edit().putString(KEY_SOUND_PROFILE, value).apply()
@@ -103,5 +107,6 @@ class PrefsManager(context: Context) {
         private const val KEY_SOUND_PROFILE = "sound_profile"
         private const val KEY_PRESETS = "presets"
         private const val KEY_HIDE_SCREENSHOTS = "hide_from_screenshots"
+        private const val KEY_HIDE_OVERLAY = "hide_overlay"
     }
 }
