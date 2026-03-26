@@ -56,6 +56,11 @@ class SoundProfileManager(private val context: Context) {
         return all.filter { it.name.lowercase().contains(q) }.take(50)
     }
 
+    fun isCustomProfile(name: String): Boolean {
+        val prefs = context.getSharedPreferences("custom_profiles", android.content.Context.MODE_PRIVATE)
+        return prefs.contains(name)
+    }
+
     fun findProfile(name: String): HeadphoneProfile? {
         // Check custom profiles first
         val custom = loadCustomProfile(name)
