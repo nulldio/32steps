@@ -53,6 +53,17 @@
 
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/preset_edit"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_edit"
+            app:tint="?colorOnSurfaceVariant"
+            android:layout_marginStart="12dp"
+            android:contentDescription="Edit"
+            android:clickable="true"
+            android:focusable="true" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

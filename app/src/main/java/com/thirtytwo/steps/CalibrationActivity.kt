@@ -42,6 +42,7 @@ class CalibrationActivity : AppCompatActivity() {
     private lateinit var volumeController: VolumeController
     private var currentChoice: String? = null
     private var inFinalComparison = false
+    private var editingProfileName: String? = null
 
     private data class BandState(val bandIndex: Int, val low: Float, val high: Float, val iteration: Int)
     private val history = mutableListOf<BandState>()
@@ -73,6 +74,12 @@ class CalibrationActivity : AppCompatActivity() {
         volumeController = VolumeController.getInstance(this)
         dp = volumeController.startCalibration()
 
+        // Check if editing an existing profile
+        editingProfileName = intent.getStringExtra(EXTRA_PROFILE_NAME)
+
+        // Load baseline: editing profile > active profile > Harman
+        loadBaseline()
+
         if (dp == null) {
             titleText.text = "Error"
             instructionText.text = "Could not start calibration. Make sure the service is running."
@@ -87,6 +94,29 @@ class CalibrationActivity : AppCompatActivity() {
         showInstructions()
     }
 
+    private var baseline = harmanBaseline.clone()
+
+    private fun loadBaseline() {
+        val profileManager = SoundProfileManager(this)
+
+        // Priority: editing profile > active profile > Harman
+        val profileName = editingProfileName
+            ?: PrefsManager(this).soundProfile
+            ?: return
+
+        val profile = profileManager.findProfile(profileName) ?: return
+
+        // Map profile bands to our calibration bands by closest frequency
+        for (i in bands.indices) {
+            val targetFreq = bands[i].freq
+            val closest = profile.bands.minByOrNull { kotlin.math.abs(it.first - targetFreq) }
+            if (closest != null) {
+                baseline[i] = closest.second
+                results[i] = closest.second
+            }
+        }
+    }
+
     private fun initializeBands() {
         try {
             val preEq = dp?.getPreEqByChannelIndex(0)
@@ -97,7 +127,7 @@ class CalibrationActivity : AppCompatActivity() {
                 val band = dp?.getPreEqBandByChannelIndex(0, i)
                 band?.isEnabled = true
                 band?.cutoffFrequency = bands[i].freq.toFloat()
-                band?.gain = harmanBaseline[i]
+                band?.gain = baseline[i]
                 dp?.setPreEqBandAllChannelsTo(i, band!!)
             }
             dp?.setInputGainAllChannelsTo(0f)
@@ -165,7 +195,7 @@ class CalibrationActivity : AppCompatActivity() {
                 finishCalibration()
                 return@setOnClickListener
             }
-            results[currentBandIndex] = harmanBaseline[currentBandIndex]
+            results[currentBandIndex] = baseline[currentBandIndex]
             applyBand(currentBandIndex, results[currentBandIndex])
             nextBand()
         }
@@ -202,9 +232,9 @@ class CalibrationActivity : AppCompatActivity() {
 
     private fun startBand() {
         val band = bands[currentBandIndex]
-        val baseline = harmanBaseline[currentBandIndex]
-        searchLow = baseline - band.range / 2
-        searchHigh = baseline + band.range / 2
+        val base = baseline[currentBandIndex]
+        searchLow = base - band.range / 2
+        searchHigh = base + band.range / 2
         currentIteration = 0
         currentChoice = null
         btnBack.visibility = if (history.isNotEmpty()) View.VISIBLE else View.GONE
@@ -291,7 +321,7 @@ class CalibrationActivity : AppCompatActivity() {
             inFinalComparison = false
             currentBandIndex = 0
             history.clear()
-            for (i in results.indices) results[i] = harmanBaseline[i]
+            for (i in results.indices) results[i] = baseline[i]
             initializeBands()
             btnSkip.text = "Skip"
             btnNoDiff.text = "No difference"
@@ -373,35 +403,50 @@ class CalibrationActivity : AppCompatActivity() {
             Pair(band.freq, results[i])
         }
 
-        val input = android.widget.EditText(this)
-        input.hint = "My headphones"
-        input.setPadding(48, 32, 48, 32)
+        if (editingProfileName != null) {
+            // Editing existing - save directly
+            SoundProfileManager(this).saveCustomProfile(editingProfileName!!, profileBands)
+            val prefs = PrefsManager(this)
+            prefs.soundProfile = editingProfileName
 
-        android.app.AlertDialog.Builder(this)
-            .setTitle("Save profile")
-            .setMessage("Give your custom profile a name")
-            .setView(input)
-            .setPositiveButton("Save") { _, _ ->
-                val name = input.text.toString().takeIf { it.isNotBlank() } ?: "Custom"
-                val prefs = PrefsManager(this)
-                val preset = Preset(name, prefs.totalSteps)
-                prefs.addPreset(preset)
-                prefs.soundProfile = name
+            val intent = android.content.Intent(this, AudioService::class.java)
+            intent.action = AudioService.ACTION_APPLY_PROFILE
+            startService(intent)
 
-                SoundProfileManager(this).saveCustomProfile(name, profileBands)
+            finish()
+        } else {
+            // New profile - ask for name
+            val input = android.widget.EditText(this)
+            input.hint = "My headphones"
+            input.setPadding(48, 32, 48, 32)
 
-                val intent = android.content.Intent(this, AudioService::class.java)
-                intent.action = AudioService.ACTION_APPLY_PROFILE
-                startService(intent)
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Save profile")
+                .setMessage("Give your custom profile a name")
+                .setView(input)
+                .setPositiveButton("Save") { _, _ ->
+                    val name = input.text.toString().takeIf { it.isNotBlank() } ?: "Custom"
+                    val prefs = PrefsManager(this)
+                    val preset = Preset(name, prefs.totalSteps)
+                    prefs.addPreset(preset)
+                    prefs.soundProfile = name
 
-                finish()
-            }
-            .setNegativeButton("Cancel") { _, _ ->
-                volumeController.stopCalibration()
-                finish()
-            }
-            .setCancelable(false)
-            .show()
+                    SoundProfileManager(this).saveCustomProfile(name, profileBands)
+
+                    val intent = android.content.Intent(this, AudioService::class.java)
+                    intent.action = AudioService.ACTION_APPLY_PROFILE
+                    startService(intent)
+
+                    finish()
+                }
+                .setNegativeButton("Cancel") { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
+    companion object {
+        const val EXTRA_PROFILE_NAME = "profile_name"
     }
 
     override fun onDestroy() {
