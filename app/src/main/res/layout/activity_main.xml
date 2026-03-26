@@ -404,6 +404,48 @@
         android:layout_marginBottom="12dp"
         android:visibility="gone" />
 
+    <!-- Create custom profile -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_create_custom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="?colorSurfaceVariant"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="22dp"
+            android:paddingEnd="22dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_music"
+                app:tint="?colorOnSurfaceVariant"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="Create" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create custom profile"
+                android:textColor="?colorOnSurfaceVariant"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
     <TextView
         android:id="@+id/permissions_title"
         android:layout_width="wrap_content"
