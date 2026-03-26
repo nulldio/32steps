@@ -32,7 +32,10 @@ class CalibrationActivity : AppCompatActivity() {
 
     private var currentBandIndex = 0
     private var currentIteration = 0
-    private val iterationsPerBand = 4
+    private var currentPass = 1 // 1 = first pass (4 iterations), 2 = refinement (2 iterations)
+    private val iterationsFirstPass = 4
+    private val iterationsSecondPass = 2
+    private val iterationsPerBand get() = if (currentPass == 1) iterationsFirstPass else iterationsSecondPass
     private val results = FloatArray(10) { harmanBaseline[it] }
 
     private var searchLow = 0f
@@ -236,9 +239,17 @@ class CalibrationActivity : AppCompatActivity() {
 
     private fun startBand() {
         val band = bands[currentBandIndex]
-        val base = baseline[currentBandIndex]
-        searchLow = base - band.range / 2
-        searchHigh = base + band.range / 2
+        if (currentPass == 1) {
+            val base = baseline[currentBandIndex]
+            searchLow = base - band.range / 2
+            searchHigh = base + band.range / 2
+        } else {
+            // Refinement pass - narrow range centered on first pass result
+            val base = results[currentBandIndex]
+            val refinementRange = band.range / 3
+            searchLow = base - refinementRange / 2
+            searchHigh = base + refinementRange / 2
+        }
         currentIteration = 0
         currentChoice = null
         btnBack.visibility = if (history.isNotEmpty()) View.VISIBLE else View.GONE
@@ -295,7 +306,14 @@ class CalibrationActivity : AppCompatActivity() {
     private fun nextBand() {
         currentBandIndex++
         if (currentBandIndex >= bands.size) {
-            showFinalComparison()
+            if (currentPass == 1) {
+                // Start refinement pass
+                currentPass = 2
+                currentBandIndex = 0
+                startBand()
+            } else {
+                showFinalComparison()
+            }
         } else {
             startBand()
         }
@@ -324,6 +342,7 @@ class CalibrationActivity : AppCompatActivity() {
             // Redo entire test
             inFinalComparison = false
             currentBandIndex = 0
+            currentPass = 1
             history.clear()
             for (i in results.indices) results[i] = baseline[i]
             initializeBands()
@@ -389,13 +408,23 @@ class CalibrationActivity : AppCompatActivity() {
 
     private fun updateUI() {
         val band = bands[currentBandIndex]
-        titleText.text = "Calibrating"
+        val passLabel = if (currentPass == 1) "Calibrating" else "Refining"
+        titleText.text = passLabel
         bandText.text = "${band.name} (${currentBandIndex + 1}/${bands.size})"
-        instructionText.text = "Tap A and B to compare, then tap your choice again to confirm"
+        instructionText.text = if (currentPass == 1)
+            "Tap A and B to compare, then tap your choice again to confirm"
+        else
+            "Fine-tuning for band interaction. Compare and confirm."
         btnBack.visibility = if (history.isNotEmpty()) View.VISIBLE else View.GONE
 
-        val totalSteps = bands.size * iterationsPerBand
-        val currentStep = currentBandIndex * iterationsPerBand + currentIteration
+        val totalFirstPass = bands.size * iterationsFirstPass
+        val totalSecondPass = bands.size * iterationsSecondPass
+        val totalSteps = totalFirstPass + totalSecondPass
+        val currentStep = if (currentPass == 1) {
+            currentBandIndex * iterationsFirstPass + currentIteration
+        } else {
+            totalFirstPass + currentBandIndex * iterationsSecondPass + currentIteration
+        }
         progress.progress = (currentStep * 100) / totalSteps
     }
 
