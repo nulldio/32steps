@@ -150,7 +150,6 @@ class CalibrationActivity : AppCompatActivity() {
                 "For each frequency band, tap A and B to hear two options, then tap Confirm to lock in your choice."
         btnA.text = "Start"
         btnA.alpha = 1f
-        (btnA.layoutParams as android.widget.LinearLayout.LayoutParams).marginEnd = 0
         btnB.visibility = View.GONE
         btnConfirm.visibility = View.GONE
         btnSkip.visibility = View.GONE
@@ -160,9 +159,6 @@ class CalibrationActivity : AppCompatActivity() {
 
         btnA.setOnClickListener {
             btnA.text = "A"
-            (btnA.layoutParams as android.widget.LinearLayout.LayoutParams).marginEnd =
-                (24 * resources.displayMetrics.density).toInt()
-            btnA.requestLayout()
             btnB.visibility = View.VISIBLE
             btnConfirm.visibility = View.VISIBLE
             btnSkip.visibility = View.VISIBLE
@@ -279,9 +275,10 @@ class CalibrationActivity : AppCompatActivity() {
             gainB = mid - step
         }
 
-        applyBand(currentBandIndex, results[currentBandIndex])
-        currentChoice = null
-        highlightButton(null)
+        // Auto-play A so user hears something immediately
+        applyTestGain(gainA)
+        currentChoice = "A"
+        highlightButton("A")
     }
 
     private fun pickLower() {
