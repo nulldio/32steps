@@ -319,6 +319,13 @@ class MainActivity : AppCompatActivity() {
                 true
             }
 
+            // Edit button
+            card.findViewById<android.view.View>(R.id.preset_edit).setOnClickListener {
+                val intent = Intent(this@MainActivity, CalibrationActivity::class.java)
+                intent.putExtra(CalibrationActivity.EXTRA_PROFILE_NAME, preset.headphoneName)
+                startActivity(intent)
+            }
+
             presetList.addView(card)
         }
     }
