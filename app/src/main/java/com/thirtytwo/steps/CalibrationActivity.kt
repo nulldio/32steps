@@ -59,6 +59,7 @@ class CalibrationActivity : AppCompatActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var btnA: Button
     private lateinit var btnB: Button
+    private lateinit var btnConfirm: Button
     private lateinit var btnSkip: Button
     private lateinit var btnNoDiff: Button
     private lateinit var btnBack: Button
@@ -73,6 +74,7 @@ class CalibrationActivity : AppCompatActivity() {
         progress = findViewById(R.id.calibration_progress)
         btnA = findViewById(R.id.btn_a)
         btnB = findViewById(R.id.btn_b)
+        btnConfirm = findViewById(R.id.btn_confirm)
         btnSkip = findViewById(R.id.btn_skip)
         btnNoDiff = findViewById(R.id.btn_no_diff)
         btnBack = findViewById(R.id.btn_back)
@@ -145,10 +147,11 @@ class CalibrationActivity : AppCompatActivity() {
         titleText.text = "Listening Test"
         bandText.text = ""
         instructionText.text = "Play some music with varied content (vocals, bass, instruments). " +
-                "For each frequency band, tap A and B to hear two options, then tap your choice again to confirm."
+                "For each frequency band, tap A and B to hear two options, then tap Confirm to lock in your choice."
         btnA.text = "Start"
         btnA.alpha = 1f
         btnB.visibility = View.GONE
+        btnConfirm.visibility = View.GONE
         btnSkip.visibility = View.GONE
         btnNoDiff.visibility = View.GONE
         btnBack.visibility = View.GONE
@@ -157,6 +160,7 @@ class CalibrationActivity : AppCompatActivity() {
         btnA.setOnClickListener {
             btnA.text = "A"
             btnB.visibility = View.VISIBLE
+            btnConfirm.visibility = View.VISIBLE
             btnSkip.visibility = View.VISIBLE
             btnNoDiff.visibility = View.VISIBLE
             setupButtons()
@@ -168,32 +172,33 @@ class CalibrationActivity : AppCompatActivity() {
         btnA.setOnClickListener {
             if (inFinalComparison) {
                 applyAllResults()
-                currentChoice = "A"
-                highlightButton("A")
-                return@setOnClickListener
-            }
-            if (currentChoice == "A") {
-                if (aIsLower) pickLower() else pickHigher()
             } else {
                 applyTestGain(gainA)
-                currentChoice = "A"
-                highlightButton("A")
             }
+            currentChoice = "A"
+            highlightButton("A")
         }
 
         btnB.setOnClickListener {
             if (inFinalComparison) {
                 applyFlat()
-                currentChoice = "B"
-                highlightButton("B")
-                return@setOnClickListener
-            }
-            if (currentChoice == "B") {
-                if (aIsLower) pickHigher() else pickLower()
             } else {
                 applyTestGain(gainB)
-                currentChoice = "B"
-                highlightButton("B")
+            }
+            currentChoice = "B"
+            highlightButton("B")
+        }
+
+        btnConfirm.setOnClickListener {
+            if (currentChoice == null) return@setOnClickListener
+            if (inFinalComparison) {
+                finishCalibration()
+                return@setOnClickListener
+            }
+            if (currentChoice == "A") {
+                if (aIsLower) pickLower() else pickHigher()
+            } else {
+                if (aIsLower) pickHigher() else pickLower()
             }
         }
 
@@ -410,7 +415,7 @@ class CalibrationActivity : AppCompatActivity() {
         val band = bands[currentBandIndex]
         val passLabel = if (currentPass == 1) "Calibrating" else "Refining"
         titleText.text = passLabel
-        bandText.text = "${band.name} (${currentBandIndex + 1}/${bands.size})"
+        bandText.text = "${band.name} (${currentBandIndex + 1}/${bands.size}) - Round ${currentIteration + 1}/$iterationsPerBand"
         instructionText.text = if (currentPass == 1)
             "Tap A and B to compare, then tap your choice again to confirm"
         else
