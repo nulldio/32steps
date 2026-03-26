@@ -52,7 +52,7 @@
             android:text="A"
             android:textSize="32sp"
             app:cornerRadius="24dp"
-            android:layout_marginEnd="24dp" />
+            android:layout_marginEnd="12dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_b"
@@ -60,7 +60,8 @@
             android:layout_height="120dp"
             android:text="B"
             android:textSize="32sp"
-            app:cornerRadius="24dp" />
+            app:cornerRadius="24dp"
+            android:layout_marginStart="12dp" />
 
     </LinearLayout>
 
