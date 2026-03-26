@@ -304,6 +304,27 @@ class VolumeController(private val context: Context) {
         } catch (_: Exception) {}
     }
 
+    // Calibration support - lets CalibrationActivity use our DynamicsProcessing
+
+    private var calibrating = false
+    private var savedCalibrationGain = 0
+
+    fun startCalibration(): DynamicsProcessing? {
+        calibrating = true
+        savedCalibrationGain = gainOffsetForStep(currentStep)
+        return dynamicsProcessors.values.firstOrNull()
+    }
+
+    fun stopCalibration() {
+        calibrating = false
+        // Restore volume gain and sound profile
+        val dp = dynamicsProcessors.values.firstOrNull() ?: return
+        dp.setInputGainAllChannelsTo(savedCalibrationGain / 100f)
+        applySoundProfile(dp)
+    }
+
+    fun isCalibrating(): Boolean = calibrating
+
     // Helpers
 
     private fun setSystemVolume(stream: Int, volume: Int) {
