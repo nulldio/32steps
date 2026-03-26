@@ -12,7 +12,7 @@
         android:id="@+id/calibration_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Calibrating"
+        android:text="Listening Test"
         android:textColor="?colorOnSurface"
         android:textSize="24sp"
         android:fontFamily="sans-serif"
@@ -22,26 +22,28 @@
         android:id="@+id/calibration_band"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Bass (1/7)"
         android:textColor="?colorOnSurfaceVariant"
         android:textSize="16sp"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="24dp" />
 
     <TextView
+        android:id="@+id/calibration_instruction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Play some music, then pick which sounds better"
         android:textColor="?colorOnSurfaceVariant"
         android:textSize="14sp"
         android:textAlignment="center"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="40dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp" />
 
+    <!-- A/B buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="48dp">
+        android:layout_marginBottom="32dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_a"
@@ -62,6 +64,7 @@
 
     </LinearLayout>
 
+    <!-- Progress -->
     <ProgressBar
         android:id="@+id/calibration_progress"
         style="?android:attr/progressBarStyleHorizontal"
@@ -73,12 +76,38 @@
         android:progressBackgroundTint="?colorOnSurfaceVariant"
         android:layout_marginBottom="24dp" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_skip"
-        android:layout_width="wrap_content"
+    <!-- Action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Skip band"
-        android:textSize="14sp"
-        style="@style/Widget.Material3.Button.TextButton" />
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Redo"
+            android:textSize="14sp"
+            android:visibility="gone"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_no_diff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No difference"
+            android:textSize="14sp"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_skip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Skip"
+            android:textSize="14sp"
+            style="@style/Widget.Material3.Button.TextButton" />
+
+    </LinearLayout>
 
 </LinearLayout>
