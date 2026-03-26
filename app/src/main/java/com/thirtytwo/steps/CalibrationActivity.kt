@@ -162,6 +162,7 @@ class CalibrationActivity : AppCompatActivity() {
             btnA.text = "A"
             (btnA.layoutParams as android.widget.LinearLayout.LayoutParams).marginEnd =
                 (24 * resources.displayMetrics.density).toInt()
+            btnA.requestLayout()
             btnB.visibility = View.VISIBLE
             btnConfirm.visibility = View.VISIBLE
             btnSkip.visibility = View.VISIBLE
