@@ -91,9 +91,10 @@ class MainActivity : AppCompatActivity() {
         volumeController.syncFromSystem()
         updateVolumeBar()
         updateStatus()
-        // Refresh stream sliders to match any changes made via overlay
+        // Refresh stream sliders and preset list
         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         refreshAppStreamSliders(am)
+        loadPresetGrid()
 
         if (pendingSetup) {
             pendingSetup = false
