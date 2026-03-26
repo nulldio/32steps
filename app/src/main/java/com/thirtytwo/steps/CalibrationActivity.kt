@@ -13,24 +13,27 @@ class CalibrationActivity : AppCompatActivity() {
     data class Band(val name: String, val freq: Int, val range: Float)
 
     private val bands = listOf(
-        Band("Bass", 60, 8f),
+        Band("Sub Bass", 31, 6f),
+        Band("Bass", 62, 8f),
+        Band("Upper Bass", 125, 6f),
         Band("Low Mid", 250, 6f),
-        Band("Mid", 1000, 5f),
-        Band("Upper Mid", 2500, 5f),
-        Band("Presence", 4000, 6f),
+        Band("Mid", 500, 5f),
+        Band("Upper Mid", 1000, 5f),
+        Band("Presence", 2000, 5f),
+        Band("Upper Presence", 4000, 6f),
         Band("Treble", 8000, 6f),
         Band("Air", 16000, 7f)
     )
 
-    // Harman target baseline
+    // Harman target baseline - 10 bands
     private val harmanBaseline = floatArrayOf(
-        3.5f, 1.0f, 0.0f, -0.5f, -1.0f, -2.0f, -3.5f
+        4.0f, 3.5f, 2.0f, 1.0f, 0.5f, 0.0f, -0.5f, -1.0f, -2.0f, -3.5f
     )
 
     private var currentBandIndex = 0
     private var currentIteration = 0
     private val iterationsPerBand = 4
-    private val results = FloatArray(7) { harmanBaseline[it] }
+    private val results = FloatArray(10) { harmanBaseline[it] }
 
     private var searchLow = 0f
     private var searchHigh = 0f
@@ -95,6 +98,7 @@ class CalibrationActivity : AppCompatActivity() {
     }
 
     private var baseline = harmanBaseline.clone()
+
 
     private fun loadBaseline() {
         val profileManager = SoundProfileManager(this)
