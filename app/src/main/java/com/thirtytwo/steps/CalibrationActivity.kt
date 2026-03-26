@@ -327,7 +327,6 @@ class CalibrationActivity : AppCompatActivity() {
 
     private fun showFinalComparison() {
         inFinalComparison = true
-        currentChoice = null
 
         titleText.text = "Final Check"
         bandText.text = ""
@@ -339,7 +338,11 @@ class CalibrationActivity : AppCompatActivity() {
         btnNoDiff.text = "Redo all"
         btnBack.visibility = View.VISIBLE
         btnBack.text = "Redo"
-        highlightButton(null)
+
+        // Auto-play A (calibrated profile)
+        applyAllResults()
+        currentChoice = "A"
+        highlightButton("A")
         progress.progress = 100
 
         applyAllResults()
