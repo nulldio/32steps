@@ -32,6 +32,11 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
+            android:theme="@style/Theme.ThirtyTwoSteps" />
+
+        <activity
+            android:name=".CalibrationActivity"
+            android:exported="false"
             android:theme="@style/Theme.ThirtyTwoSteps">
         </activity>
 

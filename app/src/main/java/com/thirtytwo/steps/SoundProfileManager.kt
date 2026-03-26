@@ -57,7 +57,39 @@ class SoundProfileManager(private val context: Context) {
     }
 
     fun findProfile(name: String): HeadphoneProfile? {
+        // Check custom profiles first
+        val custom = loadCustomProfile(name)
+        if (custom != null) return custom
         return loadProfiles().find { it.name == name }
+    }
+
+    fun saveCustomProfile(name: String, bands: List<Pair<Int, Float>>) {
+        val prefs = context.getSharedPreferences("custom_profiles", android.content.Context.MODE_PRIVATE)
+        val json = org.json.JSONObject()
+        val bandsArray = org.json.JSONArray()
+        for ((freq, gain) in bands) {
+            val b = org.json.JSONArray()
+            b.put(freq)
+            b.put(gain.toDouble())
+            bandsArray.put(b)
+        }
+        json.put("bands", bandsArray)
+        prefs.edit().putString(name, json.toString()).apply()
+    }
+
+    private fun loadCustomProfile(name: String): HeadphoneProfile? {
+        val prefs = context.getSharedPreferences("custom_profiles", android.content.Context.MODE_PRIVATE)
+        val json = prefs.getString(name, null) ?: return null
+        return try {
+            val obj = org.json.JSONObject(json)
+            val bandsArray = obj.getJSONArray("bands")
+            val bands = mutableListOf<Pair<Int, Float>>()
+            for (i in 0 until bandsArray.length()) {
+                val b = bandsArray.getJSONArray(i)
+                bands.add(b.getInt(0) to b.getDouble(1).toFloat())
+            }
+            HeadphoneProfile(name, "custom", 0f, bands)
+        } catch (_: Exception) { null }
     }
 
     fun applyProfile(profile: HeadphoneProfile, sessionId: Int) {

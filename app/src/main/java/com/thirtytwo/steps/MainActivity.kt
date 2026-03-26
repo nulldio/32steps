@@ -69,6 +69,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.btn_settings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+        findViewById<android.view.View>(R.id.btn_create_custom).setOnClickListener {
+            startActivity(Intent(this, CalibrationActivity::class.java))
+        }
         updateVolumeBar()
         loadPresetGrid()
 
