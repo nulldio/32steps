@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.Build
 import android.os.IBinder
 
@@ -17,6 +19,7 @@ class AudioService : Service() {
     private lateinit var profileManager: SoundProfileManager
     private var overlay: VolumeOverlay? = null
     private var headphoneDetector: HeadphoneDetector? = null
+    private var mediaSession: MediaSession? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         if (!appInForeground && !prefs.hideOverlay) {
@@ -63,6 +66,13 @@ class AudioService : Service() {
 
         try { setupHeadphoneDetector() } catch (_: Throwable) {}
 
+        // On TV: MediaSession takes over volume key handling from the system.
+        // This prevents the system from also changing volume (fixes double-step issue).
+        val isTv = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
+        if (isTv) {
+            try { setupTvMediaSession() } catch (_: Throwable) {}
+        }
+
         overlay = VolumeOverlay(this)
         overlay?.onSeekChanged = { step ->
             volumeController.setStep(step)
@@ -90,6 +100,30 @@ class AudioService : Service() {
             ACTION_CLEAR_PROFILE -> volumeController.setSoundProfile(null)
         }
         return START_STICKY
+    }
+
+    /**
+     * On TV, create a MediaSession that captures volume key events.
+     * When a MediaSession has a VolumeProvider, the system routes volume
+     * keys to our session instead of changing system volume directly.
+     * This prevents the double-step issue on devices like Mi Box 3.
+     */
+    private fun setupTvMediaSession() {
+        val session = MediaSession(this, "32steps")
+        session.setPlaybackState(
+            PlaybackState.Builder()
+                .setState(PlaybackState.STATE_PLAYING, 0, 1f)
+                .setActions(PlaybackState.ACTION_PLAY)
+                .build()
+        )
+        session.setCallback(object : MediaSession.Callback() {
+            override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
+                // Let AccessibilityService handle volume keys
+                return false
+            }
+        })
+        session.isActive = true
+        mediaSession = session
     }
 
     private fun setupHeadphoneDetector() {
@@ -157,6 +191,8 @@ class AudioService : Service() {
     }
 
     override fun onDestroy() {
+        mediaSession?.isActive = false
+        mediaSession?.release()
         headphoneDetector?.unregister()
         volumeController.removeStepListener(stepListener)
         overlay?.hide()
