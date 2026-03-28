@@ -85,6 +85,7 @@ class GraphicEqView @JvmOverloads constructor(
     // Touch + D-pad
     private var draggingBand = -1
     private var selectedBand = -1 // for D-pad navigation
+    private var lastSelectedBand = 0 // remembered when focus leaves
     private var lastHapticStep = Int.MIN_VALUE
     private val selectedRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -280,9 +281,8 @@ class GraphicEqView @JvmOverloads constructor(
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
                 if (selectedBand <= 0) {
-                    // At first band or no selection - let focus leave the view
-                    selectedBand = -1
-                    invalidate()
+                    // At first band - let focus leave, remember position
+                    lastSelectedBand = 0
                     return false
                 }
                 selectedBand = selectedBand - 1
@@ -292,9 +292,8 @@ class GraphicEqView @JvmOverloads constructor(
             }
             KeyEvent.KEYCODE_DPAD_RIGHT -> {
                 if (selectedBand >= bandCount - 1) {
-                    // At last band - let focus leave the view
-                    selectedBand = -1
-                    invalidate()
+                    // At last band - let focus leave, remember position
+                    lastSelectedBand = selectedBand
                     return false
                 }
                 if (selectedBand < 0) selectedBand = 0
@@ -333,6 +332,15 @@ class GraphicEqView @JvmOverloads constructor(
             }
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: android.graphics.Rect?) {
+        super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
+        if (gainFocus) {
+            // Restore last selected band when focus returns
+            selectedBand = lastSelectedBand.coerceIn(0, bandCount - 1)
+            invalidate()
+        }
     }
 
     init {
