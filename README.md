@@ -4,7 +4,8 @@
   <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid"></a>
   <br><br>
   <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.thirtytwo.steps&label=IzzyOnDroid" alt="IzzyOnDroid"></a>
-  <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['com.thirtytwo.steps']&label=IzzyOnDroid%20yearly%20downloads" alt="Downloads"></a>
+  <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/monthly/rolling.json&query=$.['com.thirtytwo.steps']&label=IzzyOnDroid%20monthly%20downloads" alt="Downloads"></a>
+  <a href="https://shields.rbtlog.dev/com.thirtytwo.steps"><img src="https://shields.rbtlog.dev/simple/com.thirtytwo.steps?style=for-the-badge" alt="RB Status"></a>
 </p>
 
 Override Android's default volume steps. Set your own custom step count (1-1000). No root required. Includes 6000+ headphone sound profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq), updated automatically.
