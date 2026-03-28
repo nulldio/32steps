@@ -364,6 +364,19 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
 
+            // On TV, allow D-pad right to reach the edit button
+            if (isTv) {
+                (card as android.view.ViewGroup).descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+                val inner = (card as android.view.ViewGroup).getChildAt(0)
+                if (inner != null) {
+                    inner.isFocusable = true
+                    inner.isClickable = true
+                    inner.setOnClickListener { card.performClick() }
+                    inner.setOnLongClickListener { card.performLongClick() }
+                }
+                editBtn.nextFocusLeft = inner?.id ?: card.id
+            }
+
             presetList.addView(card)
         }
     }
