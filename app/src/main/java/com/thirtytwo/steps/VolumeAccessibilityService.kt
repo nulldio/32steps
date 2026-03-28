@@ -79,6 +79,9 @@ class VolumeAccessibilityService : AccessibilityService() {
 
         if (!isVolumeKey) return false
 
+        // On TV, let the MediaSession VolumeProvider handle volume instead
+        if (isTv) return false
+
         when (event.action) {
             KeyEvent.ACTION_DOWN -> {
                 lastActionDownTime = System.currentTimeMillis()
