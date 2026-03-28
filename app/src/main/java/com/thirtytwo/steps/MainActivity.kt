@@ -112,6 +112,10 @@ class MainActivity : AppCompatActivity() {
         loadEqPresets()
         startSpectrum()
 
+        // Re-check permissions after a delay (TV settings may not trigger proper resume)
+        setupBtn.postDelayed({ updateStatus() }, 1000)
+        setupBtn.postDelayed({ updateStatus() }, 3000)
+
         if (pendingSetup) {
             pendingSetup = false
             nextMissingPermission()?.let {
