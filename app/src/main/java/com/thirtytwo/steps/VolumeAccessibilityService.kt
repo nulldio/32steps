@@ -50,10 +50,13 @@ class VolumeAccessibilityService : AccessibilityService() {
         }
     }
 
+    private var isTv = false
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         volumeController = VolumeController.getInstance(this)
         prefs = PrefsManager(this)
+        isTv = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
 
         try {
             vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
