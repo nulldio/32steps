@@ -225,7 +225,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select your headphones or speakers from 6000+ models to apply sound correction based on measured frequency response data from AutoEQ."
+            android:text="Select your headphones from 6000+ models to apply sound correction based on measured frequency response data from AutoEQ. Create custom profiles with the built-in graphic equalizer."
             android:textColor="?colorOnSurfaceVariant"
             android:textSize="16sp"
             android:lineSpacingMultiplier="1.4"
