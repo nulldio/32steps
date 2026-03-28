@@ -374,7 +374,7 @@ class MainActivity : AppCompatActivity() {
                     inner.setOnClickListener { card.performClick() }
                     inner.setOnLongClickListener { card.performLongClick() }
                 }
-                editBtn.nextFocusLeft = inner?.id ?: card.id
+                editBtn.nextFocusLeftId = inner?.id ?: card.id
             }
 
             presetList.addView(card)
