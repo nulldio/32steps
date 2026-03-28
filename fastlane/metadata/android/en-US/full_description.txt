@@ -18,7 +18,7 @@ Features:
 - System-wide audio control
 - Volume overlay with progress bar
 - Haptic feedback on all controls
-- Android TV support (sound profiles and EQ)
+- Android TV support (sound profiles and EQ, custom steps not supported)
 - Survives reboots
 - No root required
 - No internet permission
