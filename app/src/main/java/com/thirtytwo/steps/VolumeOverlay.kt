@@ -22,6 +22,7 @@ class VolumeOverlay(private val context: Context) {
     private val audioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
+    private val isTv = context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
 
     private var overlayView: View? = null
     private var seekBar: SeekBar? = null
@@ -41,23 +42,43 @@ class VolumeOverlay(private val context: Context) {
 
     private fun buildLayoutParams(): WindowManager.LayoutParams {
         val displayMetrics = context.resources.displayMetrics
-        val width = (displayMetrics.widthPixels * 0.85).toInt()
 
-        return WindowManager.LayoutParams(
-            width,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = (48 * displayMetrics.density).toInt()
+        return if (isTv) {
+            WindowManager.LayoutParams(
+                (displayMetrics.widthPixels * 0.45).toInt(),
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                else
+                    @Suppress("DEPRECATION")
+                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.BOTTOM or Gravity.START
+                x = (24 * displayMetrics.density).toInt()
+                y = (16 * displayMetrics.density).toInt()
+            }
+        } else {
+            val width = (displayMetrics.widthPixels * 0.85).toInt()
+            WindowManager.LayoutParams(
+                width,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                else
+                    @Suppress("DEPRECATION")
+                    WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                y = (48 * displayMetrics.density).toInt()
+            }
         }
     }
 
@@ -69,17 +90,22 @@ class VolumeOverlay(private val context: Context) {
 
             if (!isShowing) {
                 val inflater = LayoutInflater.from(context)
-                overlayView = inflater.inflate(R.layout.overlay_volume, null)
-                seekBar = overlayView?.findViewById(R.id.step_progress)
-                stepText = overlayView?.findViewById(R.id.step_text)
-                mediaLabel = overlayView?.findViewById(R.id.stream_label)
-                expandBtn = overlayView?.findViewById(R.id.btn_expand)
-                extraSliders = overlayView?.findViewById(R.id.extra_sliders)
 
-                setupMediaSeekbar(totalSteps)
-                setupRingerToggle()
-                setupExpandButton()
-                setupStreamSliders()
+                if (isTv) {
+                    overlayView = inflater.inflate(R.layout.overlay_volume_tv, null)
+                } else {
+                    overlayView = inflater.inflate(R.layout.overlay_volume, null)
+                    seekBar = overlayView?.findViewById(R.id.step_progress)
+                    stepText = overlayView?.findViewById(R.id.step_text)
+                    mediaLabel = overlayView?.findViewById(R.id.stream_label)
+                    expandBtn = overlayView?.findViewById(R.id.btn_expand)
+                    extraSliders = overlayView?.findViewById(R.id.extra_sliders)
+
+                    setupMediaSeekbar(totalSteps)
+                    setupRingerToggle()
+                    setupExpandButton()
+                    setupStreamSliders()
+                }
 
                 try {
                     windowManager.addView(overlayView, buildLayoutParams())
@@ -89,12 +115,21 @@ class VolumeOverlay(private val context: Context) {
                 }
             }
 
-            if (!isDragging) {
+            if (isTv) {
+                // TV: update step text + progress bar width
+                overlayView?.findViewById<TextView>(R.id.tv_step_text)?.text = "$currentStep"
+                val progressBar = overlayView?.findViewById<View>(R.id.tv_progress_bar)
+                if (progressBar != null) {
+                    val maxWidth = (context.resources.displayMetrics.widthPixels * 0.4).toInt()
+                    val fraction = if (totalSteps > 0) currentStep.toFloat() / totalSteps else 0f
+                    progressBar.layoutParams.width = (maxWidth * fraction).toInt().coerceAtLeast(2)
+                    progressBar.requestLayout()
+                }
+            } else if (!isDragging) {
                 seekBar?.max = totalSteps
                 seekBar?.progress = currentStep
                 stepText?.text = "$currentStep/$totalSteps"
                 mediaLabel?.text = streamLabel
-                // Swap Call/Media in dropdown based on active stream
                 val inCall = streamLabel == "Call"
                 overlayView?.findViewById<View>(R.id.call_section)?.visibility = if (inCall) View.GONE else View.VISIBLE
                 overlayView?.findViewById<View>(R.id.media_section)?.visibility = if (inCall) View.VISIBLE else View.GONE
