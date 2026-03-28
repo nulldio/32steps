@@ -550,7 +550,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         searchInput.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
+            // On TV, don't hide results on focus loss (D-pad needs to navigate to them)
+            if (!hasFocus && !isTv) {
                 searchInput.setText("")
                 searchInput.visibility = View.GONE
                 addBtn.visibility = View.VISIBLE
