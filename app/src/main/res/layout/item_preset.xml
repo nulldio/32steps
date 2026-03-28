@@ -55,14 +55,16 @@
 
         <ImageView
             android:id="@+id/preset_edit"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="7dp"
             android:src="@drawable/ic_edit"
             app:tint="?colorOnSurfaceVariant"
             android:layout_marginStart="12dp"
             android:contentDescription="Edit"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
     </LinearLayout>
 
