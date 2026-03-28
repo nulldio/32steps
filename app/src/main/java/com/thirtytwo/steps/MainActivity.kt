@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
         stepsInput.setText(prefs.totalSteps.toString())
         stepsInput.filters = arrayOf(InputFilter.LengthFilter(4))
 
-        findViewById<View>(R.id.steps_card).setOnClickListener {
+        findViewById<View>(R.id.steps_card)?.setOnClickListener {
             if (!stepsInput.hasFocus()) {
                 stepsInput.requestFocus()
                 val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
