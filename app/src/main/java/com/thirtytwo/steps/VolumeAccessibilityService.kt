@@ -2,8 +2,12 @@ package com.thirtytwo.steps
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
@@ -11,6 +15,7 @@ class VolumeAccessibilityService : AccessibilityService() {
 
     private lateinit var volumeController: VolumeController
     private lateinit var prefs: PrefsManager
+    private var vibrator: Vibrator? = null
     private val handler = Handler(Looper.getMainLooper())
 
     // Hold-to-repeat state
@@ -37,6 +42,7 @@ class VolumeAccessibilityService : AccessibilityService() {
                     KeyEvent.KEYCODE_VOLUME_UP -> volumeController.stepUp()
                     KeyEvent.KEYCODE_VOLUME_DOWN -> volumeController.stepDown()
                 }
+                tick()
                 repeatCount++
                 val interval = if (repeatCount > fastRepeatAfter) fastRepeatIntervalMs else repeatIntervalMs
                 handler.postDelayed(this, interval)
@@ -48,6 +54,15 @@ class VolumeAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         volumeController = VolumeController.getInstance(this)
         prefs = PrefsManager(this)
+
+        try {
+            vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(VIBRATOR_SERVICE) as Vibrator
+            }
+        } catch (_: Throwable) {}
 
         val intent = Intent(this, AudioService::class.java)
         startForegroundService(intent)
@@ -71,6 +86,7 @@ class VolumeAccessibilityService : AccessibilityService() {
                         KeyEvent.KEYCODE_VOLUME_UP -> volumeController.stepUp()
                         KeyEvent.KEYCODE_VOLUME_DOWN -> volumeController.stepDown()
                     }
+                    tick()
                     handler.postDelayed(repeatRunnable, initialRepeatDelayMs)
                 }
             }
@@ -81,6 +97,18 @@ class VolumeAccessibilityService : AccessibilityService() {
         }
 
         return true
+    }
+
+    private fun tick() {
+        try {
+            val v = vibrator ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                v.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+            } else {
+                @Suppress("DEPRECATION")
+                v.vibrate(10L)
+            }
+        } catch (_: Throwable) {}
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}

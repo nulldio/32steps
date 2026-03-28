@@ -68,6 +68,11 @@ class SoundProfileManager(private val context: Context) {
         return loadProfiles().find { it.name == name }
     }
 
+    /** Find the original AutoEQ profile, skipping any custom override */
+    fun findOriginalProfile(name: String): HeadphoneProfile? {
+        return loadProfiles().find { it.name == name }
+    }
+
     fun saveCustomProfile(name: String, bands: List<Pair<Int, Float>>) {
         val prefs = context.getSharedPreferences("custom_profiles", android.content.Context.MODE_PRIVATE)
         val json = org.json.JSONObject()

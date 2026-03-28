@@ -1,0 +1,7 @@
+- Added 10-band graphic equalizer
+- Create and edit custom headphone profiles
+- Edit AutoEQ profiles with reset to original
+- Channel balance control
+- Haptic feedback on all controls
+- Device capability detection
+- Settings page improvements

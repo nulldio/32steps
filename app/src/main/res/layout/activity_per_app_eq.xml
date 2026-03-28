@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:colorBackground"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="48dp"
+    android:paddingBottom="32dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Per-app EQ"
+        android:textColor="?colorOnSurface"
+        android:textSize="20sp"
+        android:fontFamily="sans-serif"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="6dp" />
+
+    <TextView
+        android:id="@+id/per_app_eq_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No recent audio apps detected yet. Play audio in some apps and they will appear here."
+        android:textColor="?colorOnSurfaceVariant"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:paddingTop="48dp"
+        android:paddingBottom="48dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/per_app_eq_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+</LinearLayout>
+</ScrollView>

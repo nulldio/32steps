@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
@@ -111,11 +112,13 @@ class VolumeOverlay(private val context: Context) {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
                     stepText?.text = "$progress/$totalSteps"
+                    seekBar?.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
                     onSeekChanged?.invoke(progress)
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
                 isDragging = true
+                seekBar?.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
                 hideRunnable?.let { handler.removeCallbacks(it) }
             }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
@@ -133,6 +136,7 @@ class VolumeOverlay(private val context: Context) {
         updateRingerIcon(ringerBtn)
 
         ringerBtn.setOnClickListener {
+            ringerBtn.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
             try {
                 val current = audioManager.ringerMode
                 val next = when (current) {
@@ -164,6 +168,7 @@ class VolumeOverlay(private val context: Context) {
 
     private fun setupExpandButton() {
         expandBtn?.setOnClickListener {
+            expandBtn?.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
             // Check DND access before expanding
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
             if (!nm.isNotificationPolicyAccessGranted) {
@@ -206,11 +211,13 @@ class VolumeOverlay(private val context: Context) {
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
+                    seekBar?.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
                     try { audioManager.setStreamVolume(stream, progress, 0) } catch (_: Exception) {}
                     counter?.text = "$progress/$max"
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
                 hideRunnable?.let { handler.removeCallbacks(it) }
             }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
