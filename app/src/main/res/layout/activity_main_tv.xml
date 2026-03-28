@@ -202,16 +202,27 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone" />
+
+        <!-- Setup -->
         <TextView
             android:id="@+id/status_text"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="?colorOnSurfaceVariant"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_setup"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Complete Setup"
+            android:textSize="16sp"
+            app:cornerRadius="24dp"
+            android:visibility="gone"
+            android:focusable="true"
+            android:layout_marginBottom="24dp" />
 
         <TextView
             android:layout_width="wrap_content"

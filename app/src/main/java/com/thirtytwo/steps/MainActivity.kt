@@ -56,14 +56,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(if (isTv) R.layout.activity_main_tv else R.layout.activity_main)
 
         prefs = PrefsManager(this)
-
-        // On TV, start AudioService directly (no AccessibilityService needed for EQ-only mode)
-        if (isTv) {
-            try {
-                val serviceIntent = android.content.Intent(this, AudioService::class.java)
-                startForegroundService(serviceIntent)
-            } catch (_: Throwable) {}
-        }
         volumeController = VolumeController.getInstance(this)
         profileManager = SoundProfileManager(this)
         stepsInput = findViewById(R.id.steps_input)
