@@ -373,6 +373,10 @@ class MainActivity : AppCompatActivity() {
                     inner.id = android.view.View.generateViewId()
                     inner.isFocusable = true
                     inner.isClickable = true
+                    // Focus highlight
+                    val ta = obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
+                    inner.foreground = ta.getDrawable(0)
+                    ta.recycle()
                     inner.setOnClickListener {
                         it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
                         if (prefs.soundProfile == preset.headphoneName) {
