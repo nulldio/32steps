@@ -147,6 +147,9 @@ class GraphicEqActivity : AppCompatActivity() {
         val input = android.widget.EditText(this)
         input.hint = "My headphones"
         input.setPadding(48, 32, 48, 32)
+        input.inputType = android.text.InputType.TYPE_CLASS_TEXT
+        input.maxLines = 1
+        input.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
         if (editingProfileName != null) input.setText(editingProfileName)
 
         android.app.AlertDialog.Builder(this)
