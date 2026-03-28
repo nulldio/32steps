@@ -189,7 +189,8 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingStart="24dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="8dp">
 
         <!-- Hidden views needed by MainActivity code -->
         <SeekBar

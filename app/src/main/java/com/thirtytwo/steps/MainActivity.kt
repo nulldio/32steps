@@ -597,6 +597,9 @@ class MainActivity : AppCompatActivity() {
 
                         searchInput.setText("")
                         searchInput.clearFocus()
+                        searchInput.visibility = View.GONE
+                        addBtn.visibility = View.VISIBLE
+                        searchResultsView.visibility = View.GONE
                         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                         imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
 
