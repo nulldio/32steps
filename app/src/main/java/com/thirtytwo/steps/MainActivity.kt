@@ -685,11 +685,14 @@ class MainActivity : AppCompatActivity() {
 
         val accessibilityOk = isAccessibilityEnabled()
         val overlayOk = Settings.canDrawOverlays(this)
-        statusText.text = listOf(
+        val lines = mutableListOf(
             if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service",
-            if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission",
-            if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization"
-        ).joinToString("\n")
+            if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission"
+        )
+        if (!isTv) {
+            lines.add(if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization")
+        }
+        statusText.text = lines.joinToString("\n")
 
         setupBtn.text = when (next) {
             Permission.ACCESSIBILITY -> "Enable Accessibility Service"

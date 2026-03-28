@@ -42,7 +42,8 @@
             android:textSize="16sp"
             app:cornerRadius="24dp"
             style="@style/Widget.Material3.Button.TextButton"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="12dp"
+            android:nextFocusLeft="@id/eq_view" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_cancel"
@@ -52,7 +53,8 @@
             android:textSize="16sp"
             app:cornerRadius="24dp"
             style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="12dp"
+            android:nextFocusLeft="@id/eq_view" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save"
@@ -60,7 +62,8 @@
             android:layout_height="48dp"
             android:text="Save"
             android:textSize="16sp"
-            app:cornerRadius="24dp" />
+            app:cornerRadius="24dp"
+            android:nextFocusLeft="@id/eq_view" />
 
     </LinearLayout>
 
