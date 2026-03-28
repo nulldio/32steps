@@ -7,8 +7,6 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.media.session.MediaSession
-import android.media.session.PlaybackState
 import android.os.Build
 import android.os.IBinder
 
@@ -19,7 +17,6 @@ class AudioService : Service() {
     private lateinit var profileManager: SoundProfileManager
     private var overlay: VolumeOverlay? = null
     private var headphoneDetector: HeadphoneDetector? = null
-    private var mediaSession: MediaSession? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         if (!appInForeground && !prefs.hideOverlay) {
@@ -66,13 +63,6 @@ class AudioService : Service() {
 
         try { setupHeadphoneDetector() } catch (_: Throwable) {}
 
-        // On TV: MediaSession takes over volume key handling from the system.
-        // This prevents the system from also changing volume (fixes double-step issue).
-        val isTv = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
-        if (isTv) {
-            try { setupTvMediaSession() } catch (_: Throwable) {}
-        }
-
         overlay = VolumeOverlay(this)
         overlay?.onSeekChanged = { step ->
             volumeController.setStep(step)
@@ -100,51 +90,6 @@ class AudioService : Service() {
             ACTION_CLEAR_PROFILE -> volumeController.setSoundProfile(null)
         }
         return START_STICKY
-    }
-
-    /**
-     * On TV, create a MediaSession with a VolumeProvider that handles all volume control.
-     * The system routes volume key presses to our VolumeProvider instead of changing
-     * system volume directly. This prevents the double-step issue and hides the system
-     * volume overlay. The AccessibilityService defers to this on TV (returns false).
-     */
-    private fun setupTvMediaSession() {
-        val session = MediaSession(this, "32steps")
-        session.setPlaybackState(
-            PlaybackState.Builder()
-                .setState(PlaybackState.STATE_PLAYING, 0, 1f)
-                .build()
-        )
-
-        val vp = object : android.media.VolumeProvider(
-            android.media.VolumeProvider.VOLUME_CONTROL_ABSOLUTE,
-            prefs.totalSteps,
-            volumeController.currentStep
-        ) {
-            override fun onSetVolumeTo(volume: Int) {
-                volumeController.setStep(volume)
-                setCurrentVolume(volumeController.currentStep)
-            }
-
-            override fun onAdjustVolume(direction: Int) {
-                when (direction) {
-                    android.media.AudioManager.ADJUST_RAISE -> volumeController.stepUp()
-                    android.media.AudioManager.ADJUST_LOWER -> volumeController.stepDown()
-                }
-                setCurrentVolume(volumeController.currentStep)
-            }
-        }
-
-        session.setPlaybackToRemote(vp)
-        session.isActive = true
-        mediaSession = session
-
-        // Keep VolumeProvider's max/current in sync with step changes
-        volumeController.addStepListener { step, total ->
-            try {
-                vp.setCurrentVolume(step)
-            } catch (_: Throwable) {}
-        }
     }
 
     private fun setupHeadphoneDetector() {
@@ -212,8 +157,6 @@ class AudioService : Service() {
     }
 
     override fun onDestroy() {
-        mediaSession?.isActive = false
-        mediaSession?.release()
         headphoneDetector?.unregister()
         volumeController.removeStepListener(stepListener)
         overlay?.hide()
