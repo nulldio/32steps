@@ -25,7 +25,31 @@ class SettingsActivity : AppCompatActivity() {
         volumeController = VolumeController.getInstance(this)
         caps = DeviceCapabilities.getInstance(this)
 
-        setupHideOverlay()
+        val isTv = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
+
+        // TV: constrain content width and increase padding
+        if (isTv) {
+            val content = findViewById<android.view.ViewGroup>(android.R.id.content)
+            val scrollView = content.getChildAt(0)
+            if (scrollView is android.widget.ScrollView) {
+                val inner = scrollView.getChildAt(0)
+                if (inner is android.widget.LinearLayout) {
+                    inner.setPadding(
+                        (resources.displayMetrics.widthPixels * 0.15).toInt(),
+                        inner.paddingTop,
+                        (resources.displayMetrics.widthPixels * 0.15).toInt(),
+                        inner.paddingBottom
+                    )
+                }
+            }
+        }
+
+        // Hide overlay toggle on TV (no overlay)
+        if (isTv) {
+            findViewById<View>(R.id.switch_hide_overlay)?.let { findParentCard(it)?.visibility = View.GONE }
+        } else {
+            setupHideOverlay()
+        }
         if (caps.hasStereoDP) setupChannelBalance()
 
         // Hide all other features for now — will add back later
