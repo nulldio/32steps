@@ -16,6 +16,7 @@ class AudioService : Service() {
     private lateinit var prefs: PrefsManager
     private lateinit var profileManager: SoundProfileManager
     private var overlay: VolumeOverlay? = null
+    private var headphoneDetector: HeadphoneDetector? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         if (!appInForeground && !prefs.hideOverlay) {
@@ -36,15 +37,31 @@ class AudioService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification())
 
         prefs = PrefsManager(this)
-        volumeController = VolumeController.getInstance(this)
-        profileManager = SoundProfileManager(this)
 
-        volumeController.attachSession(0)
-        volumeController.syncFromSystem()
-        volumeController.startObserving()
+        // Initialize audio — everything in try-catch so overlay always works
+        try {
+            val caps = DeviceCapabilities.getInstance(this)
+            if (!caps.probed) caps.probe(this)
+            VolumeController.configureForDevice(caps)
+        } catch (e: Throwable) {
+            android.util.Log.e("AudioService", "Probe failed", e)
+        }
 
-        // Apply saved sound profile via DynamicsProcessing pre-EQ
-        applySavedProfile()
+        try {
+            volumeController = VolumeController.getInstance(this)
+            profileManager = SoundProfileManager(this)
+            volumeController.attachSession(0)
+            volumeController.syncFromSystem()
+            volumeController.startObserving()
+            applySavedProfile()
+        } catch (e: Throwable) {
+            android.util.Log.e("AudioService", "Audio init failed", e)
+            // Ensure these exist even if init failed
+            if (!::volumeController.isInitialized) volumeController = VolumeController.getInstance(this)
+            if (!::profileManager.isInitialized) profileManager = SoundProfileManager(this)
+        }
+
+        try { setupHeadphoneDetector() } catch (_: Throwable) {}
 
         overlay = VolumeOverlay(this)
         overlay?.onSeekChanged = { step ->
@@ -61,8 +78,8 @@ class AudioService : Service() {
         if (sessionId > 0) {
             when (intent?.action) {
                 ACTION_ATTACH_SESSION -> {
-                    volumeController.attachSession(sessionId)
-                    // Re-apply sound profile in case it was lost
+                    val packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME)
+                    volumeController.attachSession(sessionId, packageName)
                     if (volumeController.hasSoundProfile().not()) applySavedProfile()
                 }
                 ACTION_DETACH_SESSION -> volumeController.detachSession(sessionId)
@@ -73,6 +90,53 @@ class AudioService : Service() {
             ACTION_CLEAR_PROFILE -> volumeController.setSoundProfile(null)
         }
         return START_STICKY
+    }
+
+    private fun setupHeadphoneDetector() {
+        headphoneDetector = HeadphoneDetector(this,
+            onDeviceConnected = { deviceKey, deviceName ->
+                if (!prefs.autoHeadphoneDetection) return@HeadphoneDetector
+
+                var profileName = prefs.deviceProfileMappings[deviceKey]
+                var profile = if (profileName != null) profileManager.findProfile(profileName) else null
+
+                if (profile == null && deviceName.length >= 3) {
+                    val matches = try { profileManager.searchProfiles(deviceName) } catch (_: Exception) { emptyList() }
+                    if (matches.isNotEmpty()) {
+                        profile = matches.firstOrNull {
+                            it.name.contains(deviceName, ignoreCase = true) ||
+                            deviceName.contains(it.name, ignoreCase = true)
+                        } ?: matches.first()
+                        profileName = profile.name
+
+                        val mappings = prefs.deviceProfileMappings.toMutableMap()
+                        mappings[deviceKey] = profileName
+                        prefs.deviceProfileMappings = mappings
+                    }
+                }
+
+                if (profile == null || profileName == null) return@HeadphoneDetector
+
+                prefs.profileBeforeAutoSwitch = prefs.soundProfile
+                prefs.soundProfile = profileName
+                volumeController.setSoundProfile(profile)
+            },
+            onDeviceDisconnected = { _ ->
+                if (!prefs.autoHeadphoneDetection) return@HeadphoneDetector
+                val previous = prefs.profileBeforeAutoSwitch
+                prefs.profileBeforeAutoSwitch = null
+                if (previous != null) {
+                    prefs.soundProfile = previous
+                    val profile = try { profileManager.findProfile(previous) } catch (_: Exception) { null }
+                    volumeController.setSoundProfile(profile)
+                } else {
+                    prefs.soundProfile = null
+                    volumeController.setSoundProfile(null)
+                }
+            }
+        )
+        headphoneDetector?.register()
+        headphoneDetector?.checkCurrentDevices()
     }
 
     private fun applySavedProfile() {
@@ -93,6 +157,7 @@ class AudioService : Service() {
     }
 
     override fun onDestroy() {
+        headphoneDetector?.unregister()
         volumeController.removeStepListener(stepListener)
         overlay?.hide()
         volumeController.release()
@@ -146,6 +211,7 @@ class AudioService : Service() {
         const val ACTION_APPLY_PROFILE = "com.thirtytwo.steps.APPLY_PROFILE"
         const val ACTION_CLEAR_PROFILE = "com.thirtytwo.steps.CLEAR_PROFILE"
         const val EXTRA_SESSION_ID = "session_id"
+        const val EXTRA_PACKAGE_NAME = "package_name"
 
         @Volatile
         var appInForeground = false

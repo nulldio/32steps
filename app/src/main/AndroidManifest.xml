@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="false"
@@ -35,10 +36,19 @@
             android:theme="@style/Theme.ThirtyTwoSteps" />
 
         <activity
-            android:name=".CalibrationActivity"
+            android:name=".GraphicEqActivity"
             android:exported="false"
-            android:theme="@style/Theme.ThirtyTwoSteps">
-        </activity>
+            android:theme="@style/Theme.ThirtyTwoSteps" />
+
+        <activity
+            android:name=".DeviceMappingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThirtyTwoSteps" />
+
+        <activity
+            android:name=".PerAppEqActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ThirtyTwoSteps" />
 
         <service
             android:name=".VolumeAccessibilityService"

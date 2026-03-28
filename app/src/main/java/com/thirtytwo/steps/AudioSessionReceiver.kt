@@ -7,8 +7,7 @@ import android.media.audiofx.AudioEffect
 
 /**
  * Listens for media apps opening/closing audio sessions.
- * Attaches our equalizer to each session for system-wide volume control
- * as a fallback for devices where session 0 (global mix) doesn't work.
+ * Attaches our effects to each session, passing the package name for per-app EQ.
  */
 class AudioSessionReceiver : BroadcastReceiver() {
 
@@ -22,6 +21,11 @@ class AudioSessionReceiver : BroadcastReceiver() {
             AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION -> {
                 serviceIntent.action = AudioService.ACTION_ATTACH_SESSION
                 serviceIntent.putExtra(AudioService.EXTRA_SESSION_ID, sessionId)
+                // Pass package name for per-app EQ (available API 28+)
+                val packageName = intent.getStringExtra(AudioEffect.EXTRA_PACKAGE_NAME)
+                if (packageName != null) {
+                    serviceIntent.putExtra(AudioService.EXTRA_PACKAGE_NAME, packageName)
+                }
                 context.startForegroundService(serviceIntent)
             }
             AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION -> {

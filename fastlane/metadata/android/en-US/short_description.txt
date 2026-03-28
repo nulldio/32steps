@@ -1,1 +1,1 @@
-Custom volume steps and headphone sound profiles for Android
+Custom volume steps, headphone EQ, and audio effects for Android

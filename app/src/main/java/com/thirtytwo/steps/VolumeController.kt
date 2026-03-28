@@ -4,7 +4,9 @@ import android.content.Context
 import android.database.ContentObserver
 import android.media.AudioManager
 import android.media.audiofx.DynamicsProcessing
+import android.media.audiofx.EnvironmentalReverb
 import android.media.audiofx.Equalizer
+import android.media.audiofx.Virtualizer
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -12,6 +14,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 class VolumeController(private val context: Context) {
 
@@ -22,7 +25,11 @@ class VolumeController(private val context: Context) {
 
     private val dynamicsProcessors = mutableMapOf<Int, DynamicsProcessing>()
     private val equalizers = mutableMapOf<Int, Equalizer>()
-    private var useDynamicsProcessing = true
+    private val virtualizers = mutableMapOf<Int, Virtualizer>()
+    private val reverbs = mutableMapOf<Int, EnvironmentalReverb>()
+    private val sessionPackages = mutableMapOf<Int, String>()
+    private val caps = DeviceCapabilities.getInstance(context)
+    private var useDynamicsProcessing = true // always try DP first, set false only on failure
 
     val systemMax: Int = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
     val totalSteps: Int get() = prefs.totalSteps
@@ -33,7 +40,10 @@ class VolumeController(private val context: Context) {
 
     private val mbPerSystemStep: Int by lazy { measureMbPerStep() }
     private var lastSystemVol = -1
-    private var selfChanging = false
+    @Volatile private var selfChanging = false
+
+    // Equal loudness performance: only recalculate at 5% volume boundaries
+    private var lastLoudnessFraction = -1f
 
     // Listeners
 
@@ -63,7 +73,6 @@ class VolumeController(private val context: Context) {
             val sysVol = audioManager.getStreamVolume(stream)
             if (sysVol != lastSystemVol) {
                 lastSystemVol = sysVol
-                // Only update internal state - never re-set system volume
                 if (sysVol == 0) {
                     currentStep = 0
                 } else {
@@ -71,6 +80,7 @@ class VolumeController(private val context: Context) {
                     currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
                 }
                 setAllGain(gainOffsetForStep(currentStep))
+                updateEqualLoudnessIfNeeded()
                 notifyStepChanged()
             }
         }
@@ -88,42 +98,84 @@ class VolumeController(private val context: Context) {
 
     // Session management
 
-    fun attachSession(sessionId: Int) {
+    fun attachSession(sessionId: Int, packageName: String? = null) {
         if (dynamicsProcessors.containsKey(sessionId) ||
             equalizers.containsKey(sessionId)
         ) return
 
+        if (packageName != null) {
+            sessionPackages[sessionId] = packageName
+            val apps = prefs.recentAudioApps.toMutableSet()
+            apps.add(packageName)
+            prefs.recentAudioApps = apps
+        }
+
         if (useDynamicsProcessing) {
             try {
+                val probed = caps.probed
+                val channels = if (probed && caps.hasStereoDP) 2 else 1
+                val hasLimiter = probed && caps.hasLimiter
+
                 val config = DynamicsProcessing.Config.Builder(
                     DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION,
-                    1,     // channels
-                    true,  // pre-EQ enabled (for sound profiles)
-                    10,    // 10 EQ bands
-                    false, 0, false, 0, false
+                    channels,
+                    true,                   // pre-EQ (always — profiles + EQ)
+                    PRE_EQ_BAND_COUNT,
+                    false,                  // MBC off for now
+                    0,
+                    false,                  // post-EQ off for now
+                    0,
+                    hasLimiter              // limiter always available (for balance + future use)
                 ).build()
                 val dp = DynamicsProcessing(Int.MAX_VALUE, sessionId, config)
                 dp.enabled = true
                 dynamicsProcessors[sessionId] = dp
+                recomputeUserEq()
                 applyDpGain(dp, gainOffsetForStep(currentStep))
-                applySoundProfile(dp)
-                return
+                applyPreEq(dp, sessionId)
+                applyBassTuner(dp)
+                applyBassMbc(dp)
+                applyLimiter(dp)
             } catch (_: Exception) {
                 useDynamicsProcessing = false
             }
         }
 
-        try {
-            val eq = Equalizer(Int.MAX_VALUE, sessionId)
-            eq.enabled = true
-            equalizers[sessionId] = eq
-            applyEqGain(eq, gainOffsetForStep(currentStep))
-        } catch (_: Exception) {}
+        if (!useDynamicsProcessing) {
+            try {
+                val eq = Equalizer(Int.MAX_VALUE, sessionId)
+                eq.enabled = true
+                equalizers[sessionId] = eq
+                applyEqGain(eq, gainOffsetForStep(currentStep))
+            } catch (_: Exception) {}
+        }
+
+        // Virtualizer / Crossfeed
+        if (caps.hasVirtualizer) {
+            try {
+                val v = Virtualizer(Int.MAX_VALUE, sessionId)
+                virtualizers[sessionId] = v
+                applyVirtualizerState()
+            } catch (_: Exception) {}
+        }
+
+        // Reverb
+        if (caps.hasReverb) {
+            try {
+                val r = EnvironmentalReverb(Int.MAX_VALUE, sessionId)
+                applyReverbParams(r)
+                r.enabled = prefs.reverbEnabled
+                reverbs[sessionId] = r
+            } catch (_: Exception) {}
+        }
     }
 
     fun detachSession(sessionId: Int) {
         dynamicsProcessors.remove(sessionId)?.apply { enabled = false; release() }
         equalizers.remove(sessionId)?.apply { enabled = false; release() }
+        virtualizers.remove(sessionId)?.apply { enabled = false; release() }
+        reverbs.remove(sessionId)?.apply { enabled = false; release() }
+        sessionPackages.remove(sessionId)
     }
 
     // Volume control
@@ -138,7 +190,6 @@ class VolumeController(private val context: Context) {
     fun stepUp(): Int {
         val stream = activeStream()
         if (stream != AudioManager.STREAM_MUSIC) {
-            // Non-music: step through system levels directly
             val current = audioManager.getStreamVolume(stream)
             val max = audioManager.getStreamMaxVolume(stream)
             val newVol = (current + 1).coerceAtMost(max)
@@ -171,7 +222,6 @@ class VolumeController(private val context: Context) {
         currentStep = newStep
         val stream = activeStream()
 
-        // Mute
         if (newStep == 0) {
             setSystemVolume(stream, 0)
             setAllGain(0)
@@ -179,20 +229,17 @@ class VolumeController(private val context: Context) {
             return
         }
 
-        // Music: system volume + gain offset for sub-stepping
         val (targetVol, gainOffset) = computeMapping(newStep)
         val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         if (targetVol != currentVol) {
             val needsSmoothing = currentVol > 0 && abs(targetVol - currentVol) <= 2
             if (needsSmoothing) {
-                // Small step boundary: pre-attenuate to avoid pop
                 val preAttenuation = -(targetVol - currentVol) * mbPerSystemStep + gainOffset
                 setAllGain(preAttenuation)
                 setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
                 handler.postDelayed({ setAllGain(gainOffset) }, 15)
             } else {
-                // Big jump or from mute: set directly
                 setAllGain(gainOffset)
                 setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
             }
@@ -200,7 +247,19 @@ class VolumeController(private val context: Context) {
             setAllGain(gainOffset)
         }
 
+        updateEqualLoudnessIfNeeded()
         notifyStepChanged()
+    }
+
+    /** Only recalculates pre-EQ when volume crosses a 5% boundary */
+    private fun updateEqualLoudnessIfNeeded() {
+        if (!prefs.equalLoudnessEnabled) return
+        val fraction = currentStep.toFloat() / totalSteps.coerceAtLeast(1)
+        val quantized = (fraction * 20).toInt() / 20f
+        if (quantized != lastLoudnessFraction) {
+            lastLoudnessFraction = quantized
+            for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
+        }
     }
 
     fun syncFromSystem() {
@@ -213,10 +272,9 @@ class VolumeController(private val context: Context) {
         }
         val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
         currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
-        // Re-apply mapping for the synced step
-        val (targetVol, gainOffset) = computeMapping(currentStep)
-        setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
-        setAllGain(gainOffset)
+        // Re-apply gain for the new step WITHOUT changing system volume
+        // This prevents volume jumps when changing totalSteps
+        setAllGain(gainOffsetForStep(currentStep))
     }
 
     // Volume mapping
@@ -248,10 +306,17 @@ class VolumeController(private val context: Context) {
         return avgMbPerStep
     }
 
-    // Sound profile via DynamicsProcessing pre-EQ
+    // ──────────────────────────────────────────────
+    // Pre-EQ: Sound profiles + Equal loudness
+    // ──────────────────────────────────────────────
 
     private var activeProfile: HeadphoneProfile? = null
     private var profileManager: SoundProfileManager? = null
+    private var userEqGains = FloatArray(PRE_EQ_BAND_COUNT)
+    private var isPreviewingEq = false
+    private var cachedPreampDb = prefs.preampDb
+
+ // true when ParametricEqActivity is sending live gains
 
     private fun ensureProfileLoaded() {
         if (activeProfile == null) {
@@ -268,43 +333,416 @@ class VolumeController(private val context: Context) {
 
     fun setSoundProfile(profile: HeadphoneProfile?) {
         activeProfile = profile
-        for ((_, dp) in dynamicsProcessors) applySoundProfile(dp)
+        for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
     }
 
-    private fun applySoundProfile(dp: DynamicsProcessing) {
+    /**
+     * ISO 226:2003 equal loudness compensation at 10 anchor frequencies.
+     * Differences between 40-phon and 80-phon contours, scaled 60%.
+     * Interpolated to 31 bands at runtime via [computeLoudnessGains].
+     */
+    private val loudnessAnchors = listOf(
+        31 to 10.8f, 62 to 7.2f, 125 to 4.8f, 250 to 3.6f, 500 to 1.2f,
+        1000 to 0.0f, 2000 to -0.6f, 4000 to -1.2f, 8000 to 0.0f, 16000 to 8.4f
+    )
+
+    private val loudnessOffset by lazy {
+        BiquadMath.interpolateToGrid(loudnessAnchors, PRE_EQ_FREQS)
+    }
+
+    /**
+     * Unified pre-EQ: sums sound profile + equal loudness + user EQ (graphic or parametric).
+     * Applied to all 31 third-octave bands. Auto-compensates input gain to prevent clipping.
+     */
+    private fun applyPreEq(dp: DynamicsProcessing, sessionId: Int = 0) {
         try {
             ensureProfileLoaded()
             val profile = activeProfile
+            val equalLoudness = prefs.equalLoudnessEnabled
 
-            // Enable/disable the pre-EQ stage on the channel
+            // Per-app EQ: use app-specific gains if available
+            val effectiveUserEq = getEffectiveUserEq(sessionId)
+            val hasUserEq = effectiveUserEq.any { it != 0f }
+            val hasContent = profile != null || equalLoudness || hasUserEq
+
             val preEq = dp.getPreEqByChannelIndex(0)
-            preEq.isEnabled = profile != null
+            preEq.isEnabled = hasContent
             dp.setPreEqAllChannelsTo(preEq)
 
-            if (profile == null) {
-                for (i in 0 until 10) {
-                    val band = dp.getPreEqBandByChannelIndex(0, i)
-                    band.isEnabled = false
-                    band.gain = 0f
-                    dp.setPreEqBandAllChannelsTo(i, band)
-                }
-                return
-            }
+            // Sound profile: interpolate to 31 bands
+            val profileGains = if (profile != null) {
+                BiquadMath.interpolateToGrid(profile.bands, PRE_EQ_FREQS)
+            } else FloatArray(PRE_EQ_BAND_COUNT)
 
-            // Apply profile bands to pre-EQ
-            val eqBandFreqs = intArrayOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
-            for (i in 0 until 10.coerceAtMost(profile.bands.size)) {
-                val (_, gain) = profile.bands[i]
-                val band = dp.getPreEqBandByChannelIndex(0, i)
-                band.isEnabled = true
-                band.cutoffFrequency = eqBandFreqs.getOrElse(i) { 1000 }.toFloat()
+            // Equal loudness compensation
+            val volumeFraction = if (totalSteps > 0) currentStep.toFloat() / totalSteps else 0.5f
+            val loudnessGains = if (equalLoudness) {
+                val thresholdDb = prefs.equalLoudnessThresholdDb
+                val thresholdFrac = Math.pow(10.0, thresholdDb / 20.0).toFloat()
+                val comp = if (volumeFraction >= thresholdFrac) 0f
+                    else sqrt(((thresholdFrac - volumeFraction) / thresholdFrac).coerceIn(0f, 1f))
+                FloatArray(PRE_EQ_BAND_COUNT) { if (it < loudnessOffset.size) loudnessOffset[it] * comp else 0f }
+            } else FloatArray(PRE_EQ_BAND_COUNT)
+
+            for (i in PRE_EQ_FREQS.indices) {
+                val gain = (profileGains[i] + loudnessGains[i] + effectiveUserEq[i])
+                    .coerceIn(-24f, 24f)
+                val band = try { dp.getPreEqBandByChannelIndex(0, i) } catch (_: Exception) { break }
+                band.isEnabled = hasContent
+                band.cutoffFrequency = PRE_EQ_FREQS[i].toFloat()
                 band.gain = gain
                 dp.setPreEqBandAllChannelsTo(i, band)
             }
         } catch (_: Exception) {}
     }
 
-    // Calibration support - lets CalibrationActivity use our DynamicsProcessing
+    fun setEqualLoudness(enabled: Boolean, thresholdDb: Int? = null) {
+        prefs.equalLoudnessEnabled = enabled
+        if (thresholdDb != null) prefs.equalLoudnessThresholdDb = thresholdDb
+        lastLoudnessFraction = -1f
+        for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
+    }
+
+    // User EQ: graphic or parametric mode
+
+    fun setEqMode(mode: Int) {
+        prefs.eqMode = mode
+        recomputeUserEq()
+        for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
+    }
+
+    /** Called by ParametricEqActivity for real-time preview */
+    fun setUserEqGains(gains: FloatArray) {
+        isPreviewingEq = true
+        userEqGains = if (gains.size == PRE_EQ_BAND_COUNT) gains.copyOf()
+            else FloatArray(PRE_EQ_BAND_COUNT)
+        for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
+    }
+
+    /** End preview mode (called when activity saves or cancels) */
+    fun endEqPreview() {
+        isPreviewingEq = false
+    }
+
+    /** Recompute user EQ from saved prefs (called on startup / mode change) */
+    private fun recomputeUserEq() {
+        if (isPreviewingEq) return // don't overwrite live preview
+        userEqGains = when (prefs.eqMode) {
+            EQ_MODE_GRAPHIC -> {
+                val g10 = prefs.graphicEqGains ?: FloatArray(10)
+                interpolateGraphicTo31(g10)
+            }
+            EQ_MODE_PARAMETRIC -> {
+                val bands = prefs.parametricBands.filter { it.enabled && it.gain != 0f }
+                if (bands.isEmpty()) FloatArray(PRE_EQ_BAND_COUNT)
+                else {
+                    val coeffs = bands.map { b ->
+                        BiquadMath.designFilter(b.type, b.frequency.toDouble(), b.gain.toDouble(), b.q.toDouble())
+                    }
+                    BiquadMath.evaluateChain(coeffs, PRE_EQ_FREQS)
+                }
+            }
+            else -> FloatArray(PRE_EQ_BAND_COUNT)
+        }
+    }
+
+    /** Get the effective user EQ for a session (per-app if mapped, otherwise global) */
+    private fun getEffectiveUserEq(sessionId: Int): FloatArray {
+        if (prefs.perAppEqEnabled) {
+            val pkg = sessionPackages[sessionId]
+            if (pkg != null) {
+                val presetName = prefs.appEqMappings[pkg]
+                if (presetName != null) {
+                    val preset = prefs.getEqPresets().find { it.name == presetName }
+                    if (preset != null) return computePresetGains(preset)
+                }
+            }
+        }
+        return userEqGains // global fallback
+    }
+
+    /** Compute 31-band gains from an EQ preset */
+    private fun computePresetGains(preset: EqPreset): FloatArray {
+        return when (preset.mode) {
+            EQ_MODE_GRAPHIC -> {
+                val g = preset.graphicGains ?: return FloatArray(PRE_EQ_BAND_COUNT)
+                interpolateGraphicTo31(g.toFloatArray())
+            }
+            EQ_MODE_PARAMETRIC -> {
+                val bands = preset.parametricBands?.filter { it.enabled && it.gain != 0f }
+                    ?: return FloatArray(PRE_EQ_BAND_COUNT)
+                val coeffs = bands.map { b ->
+                    BiquadMath.designFilter(b.type, b.frequency.toDouble(), b.gain.toDouble(), b.q.toDouble())
+                }
+                BiquadMath.evaluateChain(coeffs, PRE_EQ_FREQS)
+            }
+            else -> FloatArray(PRE_EQ_BAND_COUNT)
+        }
+    }
+
+    /** Interpolate 10 graphic EQ bands to 31 third-octave bands */
+    private fun interpolateGraphicTo31(gains10: FloatArray): FloatArray {
+        val graphicFreqs = intArrayOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
+        val pairs = graphicFreqs.zip(gains10.toList()).map { (f, g) -> Pair(f, g) }
+        return BiquadMath.interpolateToGrid(pairs, PRE_EQ_FREQS)
+    }
+
+    // ──────────────────────────────────────────────
+    // Bass tuner via post-EQ (12 dB/octave low shelf)
+    // ──────────────────────────────────────────────
+
+    private val bassFreqs = intArrayOf(31, 62, 125, 250, 500)
+
+    private fun applyBassTuner(dp: DynamicsProcessing) {
+        try {
+            val boost = prefs.bassBoostDb
+            val cutoff = prefs.bassCutoffHz
+            val enabled = boost > 0f
+            val maxCh = if (caps.hasStereoDP) 1 else 0
+
+            for (ch in 0..maxCh) {
+                val postEq = dp.getPostEqByChannelIndex(ch)
+                postEq.isEnabled = enabled
+                dp.setPostEqByChannelIndex(ch, postEq)
+            }
+
+            val postEqCount = caps.maxPostEqBands.coerceAtMost(bassFreqs.size)
+            for (i in 0 until postEqCount) {
+                val freq = bassFreqs[i]
+                val gain = if (!enabled) 0f else {
+                    if (freq <= cutoff) {
+                        boost
+                    } else {
+                        val octavesAbove = ln(freq.toFloat() / cutoff) / LN_2
+                        (boost - 12f * octavesAbove).coerceAtLeast(0f)
+                    }
+                }
+                val band = try { dp.getPostEqBandByChannelIndex(0, i) } catch (_: Exception) { break }
+                band.isEnabled = enabled
+                band.cutoffFrequency = freq.toFloat()
+                band.gain = gain
+                dp.setPostEqBandAllChannelsTo(i, band)
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun setBassTuner(db: Float, cutoffHz: Int? = null, type: Int? = null) {
+        prefs.bassBoostDb = db
+        if (cutoffHz != null) prefs.bassCutoffHz = cutoffHz
+        if (type != null) prefs.bassType = type
+        for ((_, dp) in dynamicsProcessors) {
+            applyBassTuner(dp)
+            applyBassMbc(dp)
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Bass compressor (MBC stage for bass dynamics)
+    //   Natural:    MBC disabled, post-EQ shelf only
+    //   Transient:  fast attack / slow release → punchy
+    //   Sustain:    slow attack / fast release → rumble
+    // ──────────────────────────────────────────────
+
+    private val mbcFreqs = intArrayOf(60, 150, 400) // sub-bass, bass, low-mid crossovers
+
+    private fun applyBassMbc(dp: DynamicsProcessing) {
+        if (!caps.hasMbc) return
+        try {
+            val bassType = prefs.bassType
+            val boost = prefs.bassBoostDb
+            val cutoff = prefs.bassCutoffHz
+            val enabled = bassType != BASS_NATURAL && boost > 0f
+
+            for (ch in 0..(if (caps.hasStereoDP) 1 else 0)) {
+                val mbc = dp.getMbcByChannelIndex(ch)
+                mbc.isEnabled = enabled
+                dp.setMbcByChannelIndex(ch, mbc)
+            }
+
+            for (i in mbcFreqs.indices) {
+                val band = dp.getMbcBandByChannelIndex(0, i)
+                band.isEnabled = enabled
+                band.cutoffFrequency = mbcFreqs[i].toFloat()
+
+                if (enabled) {
+                    val inRange = mbcFreqs[i] <= cutoff * 2
+                    val ratio = if (inRange) 2.5f else 1.0f
+
+                    when (bassType) {
+                        BASS_TRANSIENT -> {
+                            try { band.attackTime = 5f } catch (_: Exception) {}
+                            try { band.releaseTime = 200f } catch (_: Exception) {}
+                            try { band.ratio = ratio } catch (_: Exception) {}
+                            try { band.threshold = -30f } catch (_: Exception) {}
+                            try { band.kneeWidth = 6f } catch (_: Exception) {}
+                            band.preGain = 0f
+                            band.postGain = if (inRange) boost * 0.3f else 0f
+                        }
+                        BASS_SUSTAIN -> {
+                            try { band.attackTime = 50f } catch (_: Exception) {}
+                            try { band.releaseTime = 20f } catch (_: Exception) {}
+                            try { band.ratio = ratio } catch (_: Exception) {}
+                            try { band.threshold = -25f } catch (_: Exception) {}
+                            try { band.kneeWidth = 6f } catch (_: Exception) {}
+                            band.preGain = 0f
+                            band.postGain = if (inRange) boost * 0.4f else 0f
+                        }
+                    }
+                } else {
+                    band.ratio = 1f
+                    band.threshold = 0f
+                    band.preGain = 0f
+                    band.postGain = 0f
+                }
+
+                dp.setMbcBandAllChannelsTo(i, band)
+            }
+        } catch (_: Exception) {}
+    }
+
+    // ──────────────────────────────────────────────
+    // Limiter (prevents clipping from EQ boosts)
+    // ──────────────────────────────────────────────
+
+    private fun applyLimiter(dp: DynamicsProcessing) {
+        if (!caps.hasLimiter) return
+        try {
+            val enabled = prefs.limiterEnabled
+            for (ch in 0..(if (caps.hasStereoDP) 1 else 0)) {
+                val limiter = dp.getLimiterByChannelIndex(ch)
+                limiter.isEnabled = enabled
+                if (enabled) {
+                    try { limiter.attackTime = 1f } catch (_: Exception) {}
+                    try { limiter.releaseTime = 100f } catch (_: Exception) {}
+                    try { limiter.ratio = 10f } catch (_: Exception) {}
+                    try { limiter.threshold = -0.5f } catch (_: Exception) {}
+                    try { limiter.postGain = 0f } catch (_: Exception) {}
+                }
+                dp.setLimiterByChannelIndex(ch, limiter)
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun setLimiterEnabled(enabled: Boolean) {
+        prefs.limiterEnabled = enabled
+        for ((_, dp) in dynamicsProcessors) applyLimiter(dp)
+    }
+
+    // ──────────────────────────────────────────────
+    // Channel balance (per-channel input gain)
+    // ──────────────────────────────────────────────
+
+    fun setChannelBalance(balance: Float) {
+        prefs.channelBalance = balance
+        setAllGain(gainOffsetForStep(currentStep))
+    }
+
+    // ──────────────────────────────────────────────
+    // Crossfeed (uses Virtualizer at low strength for speaker simulation)
+    // Mutually exclusive with manual Virtualizer
+    // ──────────────────────────────────────────────
+
+    fun setCrossfeed(enabled: Boolean, strength: Int? = null) {
+        prefs.crossfeedEnabled = enabled
+        if (strength != null) prefs.crossfeedStrength = strength
+        if (enabled) {
+            prefs.virtualizerEnabled = false // mutual exclusion
+        }
+        applyVirtualizerState()
+    }
+
+    // ──────────────────────────────────────────────
+    // Virtualizer
+    // ──────────────────────────────────────────────
+
+    fun setVirtualizer(enabled: Boolean, strength: Int? = null) {
+        prefs.virtualizerEnabled = enabled
+        if (strength != null) prefs.virtualizerStrength = strength
+        if (enabled) {
+            prefs.crossfeedEnabled = false // mutual exclusion
+        }
+        applyVirtualizerState()
+    }
+
+    /** Applies the correct Virtualizer state based on crossfeed vs manual virtualizer */
+    private fun applyVirtualizerState() {
+        val crossfeed = prefs.crossfeedEnabled
+        val virtualizer = prefs.virtualizerEnabled
+        for ((_, v) in virtualizers) {
+            try {
+                if (crossfeed) {
+                    v.setStrength(prefs.crossfeedStrength.toShort())
+                    v.enabled = true
+                } else if (virtualizer) {
+                    v.setStrength(prefs.virtualizerStrength.toShort())
+                    v.enabled = true
+                } else {
+                    v.enabled = false
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Reverberation (EnvironmentalReverb)
+    // OpenAL EFX standard presets converted for Android
+    // ──────────────────────────────────────────────
+
+    data class ReverbParams(
+        val roomLevel: Short,
+        val roomHFLevel: Short,
+        val decayTime: Int,
+        val decayHFRatio: Short,
+        val reflectionsLevel: Short,
+        val reflectionsDelay: Int,
+        val reverbLevel: Short,
+        val reverbDelay: Int,
+        val diffusion: Short,
+        val density: Short
+    )
+
+    // Converted from OpenAL EFX-Util.h standard presets (linear→mB, s→ms, float→permille)
+    private val reverbPresets = arrayOf(
+        // Small Room (EFX_REVERB_PRESET_ROOM)
+        ReverbParams(-1000, -454, 400, 830, -1646, 2, 53, 3, 1000, 429),
+        // Medium Room (EFX_REVERB_PRESET_GENERIC)
+        ReverbParams(-1000, -100, 1490, 830, -2602, 7, 200, 11, 1000, 1000),
+        // Large Hall (EFX_REVERB_PRESET_CONCERTHALL)
+        ReverbParams(-1000, -500, 3920, 700, -1230, 20, -2, 29, 1000, 1000),
+        // Cathedral (EFX_REVERB_PRESET_CHAPEL)
+        ReverbParams(-1000, -500, 4620, 640, -700, 32, -200, 49, 1000, 1000)
+    )
+
+    private fun applyReverbParams(r: EnvironmentalReverb) {
+        val p = reverbPresets.getOrElse(prefs.reverbPreset) { reverbPresets[0] }
+        try {
+            r.roomLevel = p.roomLevel.coerceIn(-9000, 0)
+            r.roomHFLevel = p.roomHFLevel.coerceIn(-9000, 0)
+            r.decayTime = p.decayTime.coerceIn(100, 20000)
+            r.decayHFRatio = p.decayHFRatio.coerceIn(100, 2000)
+            r.reflectionsLevel = p.reflectionsLevel.coerceIn(-9000, 1000)
+            r.reflectionsDelay = p.reflectionsDelay.coerceIn(0, 300)
+            r.reverbLevel = p.reverbLevel.coerceIn(-9000, 2000)
+            r.reverbDelay = p.reverbDelay.coerceIn(0, 100)
+            r.diffusion = p.diffusion.coerceIn(0, 1000)
+            r.density = p.density.coerceIn(0, 1000)
+        } catch (_: Exception) {}
+    }
+
+    fun setReverb(enabled: Boolean, preset: Int? = null) {
+        prefs.reverbEnabled = enabled
+        if (preset != null) prefs.reverbPreset = preset
+        for ((_, r) in reverbs) {
+            try {
+                applyReverbParams(r)
+                r.enabled = enabled
+            } catch (_: Exception) {}
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Calibration (GraphicEqActivity borrows DP)
+    // ──────────────────────────────────────────────
 
     private var calibrating = false
     private var savedCalibrationGain = 0
@@ -317,15 +755,21 @@ class VolumeController(private val context: Context) {
 
     fun stopCalibration() {
         calibrating = false
-        // Restore volume gain and sound profile
-        val dp = dynamicsProcessors.values.firstOrNull() ?: return
-        dp.setInputGainAllChannelsTo(savedCalibrationGain / 100f)
-        applySoundProfile(dp)
+        activeProfile = null // force reload from prefs (may have been updated by GraphicEqActivity)
+        val entry = dynamicsProcessors.entries.firstOrNull() ?: return
+        val dp = entry.value
+        applyDpGain(dp, savedCalibrationGain)
+        applyPreEq(dp, entry.key)
+        applyBassTuner(dp)
+        applyBassMbc(dp)
+        applyLimiter(dp)
     }
 
     fun isCalibrating(): Boolean = calibrating
 
-    // Helpers
+    // ──────────────────────────────────────────────
+    // Gain helpers
+    // ──────────────────────────────────────────────
 
     private fun setSystemVolume(stream: Int, volume: Int) {
         selfChanging = true
@@ -340,7 +784,42 @@ class VolumeController(private val context: Context) {
     }
 
     private fun applyDpGain(dp: DynamicsProcessing, mb: Int) {
-        try { dp.setInputGainAllChannelsTo(mb / 100f) } catch (_: Exception) {}
+        try {
+            val baseGain = mb / 100f + cachedPreampDb
+            dp.setInputGainAllChannelsTo(baseGain)
+            applyChannelBalance(dp)
+        } catch (_: Exception) {}
+    }
+
+    private fun applyChannelBalance(dp: DynamicsProcessing) {
+        if (!caps.hasStereoDP || !caps.hasLimiter) return
+        val balance = prefs.channelBalance
+        if (balance == 0f) return // most common case — skip all JNI calls
+        try {
+            val leftAtten = if (balance > 0f) -balance * 96f else 0f
+            val rightAtten = if (balance < 0f) balance * 96f else 0f
+
+            // Enable limiter on both channels for balance (transparent settings if user hasn't enabled limiting)
+            for (ch in 0..1) {
+                val lim = dp.getLimiterByChannelIndex(ch)
+                lim.isEnabled = true
+                if (!prefs.limiterEnabled) {
+                    // Transparent: won't actually limit anything
+                    try { lim.threshold = 0f } catch (_: Throwable) {}
+                    try { lim.ratio = 1f } catch (_: Throwable) {}
+                    try { lim.attackTime = 1f } catch (_: Throwable) {}
+                    try { lim.releaseTime = 100f } catch (_: Throwable) {}
+                }
+                lim.postGain = if (ch == 0) leftAtten else rightAtten
+                dp.setLimiterByChannelIndex(ch, lim)
+            }
+        } catch (_: Throwable) {}
+    }
+
+    fun setPreamp(db: Float) {
+        prefs.preampDb = db
+        cachedPreampDb = db
+        setAllGain(gainOffsetForStep(currentStep))
     }
 
     private fun applyEqGain(eq: Equalizer, mb: Int) {
@@ -359,8 +838,16 @@ class VolumeController(private val context: Context) {
         for ((_, eq) in equalizers) {
             try { eq.enabled = false; eq.release() } catch (_: Exception) {}
         }
+        for ((_, v) in virtualizers) {
+            try { v.enabled = false; v.release() } catch (_: Exception) {}
+        }
+        for ((_, r) in reverbs) {
+            try { r.enabled = false; r.release() } catch (_: Exception) {}
+        }
         dynamicsProcessors.clear()
         equalizers.clear()
+        virtualizers.clear()
+        reverbs.clear()
     }
 
     companion object {
@@ -372,5 +859,30 @@ class VolumeController(private val context: Context) {
                 instance ?: VolumeController(context.applicationContext).also { instance = it }
             }
         }
+
+        /** Fixed 10-band pre-EQ matching AutoEQ FixedBandEQ format exactly */
+        val PRE_EQ_FREQS = intArrayOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000)
+        const val PRE_EQ_BAND_COUNT = 10
+
+        /** Called after device probe to update capabilities */
+        fun configureForDevice(caps: DeviceCapabilities) {
+            // Band count stays at 10 always — matches AutoEQ exactly
+            instance?.let {
+                if (caps.hasDynamicsProcessing) it.useDynamicsProcessing = true
+            }
+        }
+
+        const val EQ_MODE_OFF = 0
+        const val EQ_MODE_GRAPHIC = 1
+        const val EQ_MODE_PARAMETRIC = 2
+
+        val REVERB_PRESET_LABELS = arrayOf("Small room", "Medium room", "Large hall", "Cathedral")
+        val BASS_TYPE_LABELS = arrayOf("Natural", "Transient compressor", "Sustain compressor")
+
+        const val BASS_NATURAL = 0
+        const val BASS_TRANSIENT = 1
+        const val BASS_SUSTAIN = 2
+
+        private val LN_2 = ln(2f)
     }
 }

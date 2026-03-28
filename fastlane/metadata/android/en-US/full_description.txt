@@ -4,14 +4,20 @@ Override Android's default volume steps. Set your own custom step count from 1 t
 
 Sound profiles: select your headphones from 6000+ models and the app applies an EQ correction based on measured frequency response data from AutoEQ. Save multiple presets with different headphones and step counts. The database is updated daily.
 
+Graphic equalizer: 10-band graphic EQ to create custom headphone profiles or fine-tune existing AutoEQ profiles. Reset to original AutoEQ defaults anytime.
+
 Features:
 
 - Custom volume step count (1-1000)
-- 6000+ headphone sound profiles
+- 6000+ headphone sound profiles from AutoEQ
+- 10-band graphic equalizer
+- Create, edit, and save custom headphone profiles
+- Channel balance control
 - Save presets per headphone
 - Works with hardware volume buttons
 - System-wide audio control
 - Volume overlay with progress bar
+- Haptic feedback on all controls
 - Survives reboots
 - No root required
 - No internet permission

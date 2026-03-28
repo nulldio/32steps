@@ -39,6 +39,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var presetList: LinearLayout
     private var pendingSetup = false
     private var profilesLoaded = false
+    private var spectrumAnalyzer: SpectrumAnalyzer? = null
+    private var spectrumView: SpectrumAnalyzerView? = null
 
     private val stepListener: (Int, Int) -> Unit = { step, total ->
         runOnUiThread {
@@ -65,13 +67,25 @@ class MainActivity : AppCompatActivity() {
         setupStepsInput()
         setupVolumeSeekbar()
         setupStreamSliders()
-        setupBtn.setOnClickListener { openNextSetupStep() }
+        setupBtn.setOnClickListener { it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK); openNextSetupStep() }
         findViewById<android.view.View>(R.id.btn_settings).setOnClickListener {
+            it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         findViewById<android.view.View>(R.id.btn_create_custom).setOnClickListener {
-            startActivity(Intent(this, CalibrationActivity::class.java))
+            it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+            startActivity(Intent(this, GraphicEqActivity::class.java))
         }
+        // EQ Presets
+        loadEqPresets()
+        findViewById<android.view.View>(R.id.btn_import_eq_preset).setOnClickListener {
+            it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+            EqPresetHelper.importPreset(importPresetLauncher)
+        }
+
+        // Spectrum analyzer
+        spectrumView = findViewById(R.id.spectrum_view)
+        setupSpectrumAnalyzer()
         updateVolumeBar()
         loadPresetGrid()
 
@@ -91,10 +105,11 @@ class MainActivity : AppCompatActivity() {
         volumeController.syncFromSystem()
         updateVolumeBar()
         updateStatus()
-        // Refresh stream sliders and preset list
         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         refreshAppStreamSliders(am)
         loadPresetGrid()
+        loadEqPresets()
+        startSpectrum()
 
         if (pendingSetup) {
             pendingSetup = false
@@ -108,6 +123,12 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         AudioService.appInForeground = false
         volumeController.removeStepListener(stepListener)
+        stopSpectrum()
+    }
+
+    override fun onDestroy() {
+        spectrumAnalyzer?.release()
+        super.onDestroy()
     }
 
     // Steps input
@@ -170,11 +191,14 @@ class MainActivity : AppCompatActivity() {
         volumeSeekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
+                    seekBar?.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
                     volumeController.setStep(progress)
                     volumeCounter.text = "$progress/${prefs.totalSteps}"
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+            }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
     }
@@ -186,6 +210,7 @@ class MainActivity : AppCompatActivity() {
         var expanded = false
 
         expandBtn.setOnClickListener {
+            it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
             // Request DND access if not granted
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
             if (!nm.isNotificationPolicyAccessGranted) {
@@ -215,11 +240,14 @@ class MainActivity : AppCompatActivity() {
         slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
+                    seekBar?.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
                     try { audioManager.setStreamVolume(stream, progress, 0) } catch (_: Exception) {}
                     counter.text = "$progress/$max"
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+            }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 // Auto-save to active preset
                 val activeProfile = prefs.soundProfile ?: return
@@ -280,6 +308,7 @@ class MainActivity : AppCompatActivity() {
 
             // Tap to apply or deselect
             card.setOnClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
                 if (prefs.soundProfile == preset.headphoneName) {
                     // Deselect
                     prefs.soundProfile = null
@@ -303,6 +332,7 @@ class MainActivity : AppCompatActivity() {
 
             // Long press to delete
             card.setOnLongClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
                 AlertDialog.Builder(this)
                     .setMessage("Remove ${preset.headphoneName}?")
                     .setPositiveButton("Remove") { _, _ ->
@@ -320,17 +350,13 @@ class MainActivity : AppCompatActivity() {
                 true
             }
 
-            // Edit button - only for custom profiles
+            // Edit button - opens graphic EQ for any profile
             val editBtn = card.findViewById<android.view.View>(R.id.preset_edit)
-            val isCustom = SoundProfileManager(this@MainActivity).isCustomProfile(preset.headphoneName)
-            if (isCustom) {
-                editBtn.setOnClickListener {
-                    val intent = Intent(this@MainActivity, CalibrationActivity::class.java)
-                    intent.putExtra(CalibrationActivity.EXTRA_PROFILE_NAME, preset.headphoneName)
-                    startActivity(intent)
-                }
-            } else {
-                editBtn.visibility = android.view.View.GONE
+            editBtn.setOnClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                val intent = Intent(this@MainActivity, GraphicEqActivity::class.java)
+                intent.putExtra(GraphicEqActivity.EXTRA_PROFILE_NAME, preset.headphoneName)
+                startActivity(intent)
             }
 
             presetList.addView(card)
@@ -341,6 +367,172 @@ class MainActivity : AppCompatActivity() {
         loadPresetGrid()
     }
 
+    private fun loadEqPresets() {
+        val section = findViewById<android.view.View>(R.id.eq_presets_section)
+        val list = findViewById<android.widget.LinearLayout>(R.id.eq_preset_list)
+        val presets = prefs.getEqPresets()
+
+        if (presets.isEmpty()) {
+            section.visibility = android.view.View.GONE
+            return
+        }
+
+        section.visibility = android.view.View.VISIBLE
+        list.removeAllViews()
+
+        for (preset in presets) {
+            val card = layoutInflater.inflate(R.layout.item_preset, list, false)
+            card.findViewById<android.widget.TextView>(R.id.preset_name).text = preset.name
+            val modeLabel = when (preset.mode) {
+                VolumeController.EQ_MODE_GRAPHIC -> "Graphic EQ"
+                VolumeController.EQ_MODE_PARAMETRIC -> "Parametric EQ"
+                else -> "EQ"
+            }
+            card.findViewById<android.widget.TextView>(R.id.preset_steps).text = modeLabel
+            card.findViewById<android.view.View>(R.id.preset_edit).visibility = android.view.View.GONE
+
+            card.setOnClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                applyEqPreset(preset)
+            }
+
+            card.setOnLongClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                val options = arrayOf("Export as file", "Delete")
+                android.app.AlertDialog.Builder(this)
+                    .setTitle(preset.name)
+                    .setItems(options) { _, which ->
+                        when (which) {
+                            0 -> EqPresetHelper.exportPreset(this, preset, exportPresetLauncher)
+                            1 -> {
+                                prefs.deleteEqPreset(preset.name)
+                                loadEqPresets()
+                            }
+                        }
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+                true
+            }
+
+            list.addView(card)
+        }
+    }
+
+    private fun applyEqPreset(preset: EqPreset) {
+        when (preset.mode) {
+            VolumeController.EQ_MODE_GRAPHIC -> {
+                val gains = preset.graphicGains?.toFloatArray() ?: return
+                prefs.graphicEqGains = gains
+                prefs.eqMode = VolumeController.EQ_MODE_GRAPHIC
+                volumeController.setEqMode(VolumeController.EQ_MODE_GRAPHIC)
+            }
+            VolumeController.EQ_MODE_PARAMETRIC -> {
+                prefs.parametricBands = preset.parametricBands ?: return
+                prefs.eqMode = VolumeController.EQ_MODE_PARAMETRIC
+                volumeController.setEqMode(VolumeController.EQ_MODE_PARAMETRIC)
+            }
+        }
+    }
+
+    // Spectrum analyzer
+
+    private val importProfileLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val uri = result.data?.data ?: return@registerForActivityResult
+            try {
+                val text = contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() } ?: return@registerForActivityResult
+                // Get actual filename from content resolver (not the garbled URI path)
+                var fileName = ""
+                try {
+                    contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                            if (idx >= 0) fileName = cursor.getString(idx) ?: ""
+                        }
+                    }
+                } catch (_: Exception) {}
+                if (fileName.isBlank()) fileName = uri.lastPathSegment?.substringAfterLast('/') ?: ""
+                val parsed = AutoEqImporter.parse(text, fileName)
+                if (parsed == null) {
+                    android.widget.Toast.makeText(this, "Could not parse file", android.widget.Toast.LENGTH_SHORT).show()
+                    return@registerForActivityResult
+                }
+
+                // Save as sound profile + preset
+                SoundProfileManager(this).saveCustomProfile(parsed.name, parsed.bands)
+                prefs.addPreset(Preset(parsed.name, prefs.totalSteps))
+                prefs.soundProfile = parsed.name
+
+                val intent = Intent(this, AudioService::class.java)
+                intent.action = AudioService.ACTION_APPLY_PROFILE
+                startService(intent)
+
+                loadPresetGrid()
+                android.widget.Toast.makeText(this, "Imported: ${parsed.name}", android.widget.Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                android.widget.Toast.makeText(this, "Import failed", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private val exportPresetLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            EqPresetHelper.handleExportResult(this, result.data?.data)
+        }
+    }
+
+    private val importPresetLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            EqPresetHelper.handleImportResult(this, result.data?.data) { loadEqPresets() }
+        }
+    }
+
+    private val requestAudioPermission = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            spectrumView?.visibility = android.view.View.VISIBLE
+            spectrumAnalyzer = SpectrumAnalyzer(0)
+            startSpectrum()
+        }
+    }
+
+    private fun setupSpectrumAnalyzer() {
+        val caps = DeviceCapabilities.getInstance(this)
+        if (!caps.hasVisualizer) {
+            spectrumView?.visibility = android.view.View.GONE
+            return
+        }
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            spectrumView?.visibility = android.view.View.VISIBLE
+            spectrumAnalyzer = SpectrumAnalyzer(0)
+        } else {
+            spectrumView?.visibility = android.view.View.VISIBLE
+            spectrumView?.setOnClickListener {
+                it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                requestAudioPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+            }
+        }
+    }
+
+    private fun startSpectrum() {
+        val view = spectrumView ?: return
+        spectrumAnalyzer?.start { magnitudes, sampleRate ->
+            runOnUiThread { view.updateFft(magnitudes, sampleRate) }
+        }
+    }
+
+    private fun stopSpectrum() {
+        spectrumAnalyzer?.stop()
+    }
+
     private fun setupSoundProfile() {
         val addBtn = findViewById<View>(R.id.btn_add_preset)
         val searchInput = findViewById<EditText>(R.id.profile_search)
@@ -348,6 +540,7 @@ class MainActivity : AppCompatActivity() {
         var currentResults: List<HeadphoneProfile>
 
         addBtn.setOnClickListener {
+            it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
             addBtn.visibility = View.GONE
             searchInput.visibility = View.VISIBLE
             searchInput.requestFocus()
@@ -388,6 +581,7 @@ class MainActivity : AppCompatActivity() {
                     item.findViewById<TextView>(R.id.preset_name).text = profile.name
                     item.findViewById<TextView>(R.id.preset_steps).text = profile.category
                     item.setOnClickListener {
+                        it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
                         val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                         val preset = Preset(profile.name, prefs.totalSteps,
                             am.getStreamVolume(AudioManager.STREAM_RING),

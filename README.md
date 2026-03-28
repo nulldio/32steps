@@ -16,6 +16,18 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="200" />
 </p>
 
+## Features
+
+- **Custom volume steps** — 1 to 1000 steps, replacing Android's default 15-25
+- **6000+ headphone sound profiles** — AutoEQ corrections for accurate sound, updated daily
+- **10-band graphic equalizer** — Create custom profiles or fine-tune AutoEQ profiles
+- **Channel balance** — Left/right volume control for hearing compensation
+- **Volume overlay** — Floating popup with expandable stream sliders (Media, Call, Ring, Notification, Alarm)
+- **Ringer mode toggle** — Switch Ring/Vibrate/Silent from the overlay
+- **Preset system** — Save multiple headphone + step count combos, switch with one tap
+- **Haptic feedback** — Tactile response on all controls
+- **No root, no internet, no ads, no tracking**
+
 ## How it works
 
 Android defaults to 15-25 volume steps. 32steps lets you set your own count by splitting each system step into smaller sub-steps using a gain offset through Android's DynamicsProcessing API (falls back to Equalizer on older devices). An accessibility service intercepts your volume buttons, and a foreground service keeps it running in the background. Works across all apps.
