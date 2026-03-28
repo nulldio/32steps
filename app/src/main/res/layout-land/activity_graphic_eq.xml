@@ -63,6 +63,7 @@
             android:text="Save"
             android:textSize="16sp"
             app:cornerRadius="24dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:nextFocusLeft="@id/eq_view" />
 
     </LinearLayout>
