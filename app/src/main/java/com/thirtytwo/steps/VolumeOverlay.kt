@@ -116,14 +116,18 @@ class VolumeOverlay(private val context: Context) {
             }
 
             if (isTv) {
-                // TV: update step text + progress bar width
+                // TV: update step text + progress bar width relative to track
                 overlayView?.findViewById<TextView>(R.id.tv_step_text)?.text = "$currentStep"
                 val progressBar = overlayView?.findViewById<View>(R.id.tv_progress_bar)
-                if (progressBar != null) {
-                    val maxWidth = (context.resources.displayMetrics.widthPixels * 0.4).toInt()
-                    val fraction = if (totalSteps > 0) currentStep.toFloat() / totalSteps else 0f
-                    progressBar.layoutParams.width = (maxWidth * fraction).toInt().coerceAtLeast(2)
-                    progressBar.requestLayout()
+                val track = overlayView?.findViewById<View>(R.id.tv_progress_track)
+                if (progressBar != null && track != null) {
+                    track.post {
+                        val maxWidth = if (track.width > 0) track.width
+                            else (context.resources.displayMetrics.widthPixels * 0.4).toInt()
+                        val fraction = if (totalSteps > 0) currentStep.toFloat() / totalSteps else 0f
+                        progressBar.layoutParams.width = (maxWidth * fraction).toInt().coerceAtLeast(2)
+                        progressBar.requestLayout()
+                    }
                 }
             } else if (!isDragging) {
                 seekBar?.max = totalSteps
