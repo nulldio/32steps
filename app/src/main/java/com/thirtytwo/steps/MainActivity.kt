@@ -613,12 +613,17 @@ class MainActivity : AppCompatActivity() {
 
     private enum class Permission { ACCESSIBILITY, OVERLAY, BATTERY }
 
+    private val isTv by lazy { packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK) }
+
     private fun nextMissingPermission(): Permission? {
         if (!isAccessibilityEnabled()) return Permission.ACCESSIBILITY
         if (!Settings.canDrawOverlays(this)) return Permission.OVERLAY
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (!pm.isIgnoringBatteryOptimizations(packageName) && !prefs.batterySetupDone)
-            return Permission.BATTERY
+        // Skip battery optimization on TV - always plugged in
+        if (!isTv) {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!pm.isIgnoringBatteryOptimizations(packageName) && !prefs.batterySetupDone)
+                return Permission.BATTERY
+        }
         return null
     }
 
