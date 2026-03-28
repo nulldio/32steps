@@ -617,9 +617,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun nextMissingPermission(): Permission? {
         if (!isAccessibilityEnabled()) return Permission.ACCESSIBILITY
-        if (!Settings.canDrawOverlays(this)) return Permission.OVERLAY
-        // Skip battery optimization on TV - always plugged in
+        // Skip overlay and battery on TV - no volume overlay, always plugged in
         if (!isTv) {
+            if (!Settings.canDrawOverlays(this)) return Permission.OVERLAY
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             if (!pm.isIgnoringBatteryOptimizations(packageName) && !prefs.batterySetupDone)
                 return Permission.BATTERY
@@ -684,12 +684,12 @@ class MainActivity : AppCompatActivity() {
         setupBtn.visibility = View.VISIBLE
 
         val accessibilityOk = isAccessibilityEnabled()
-        val overlayOk = Settings.canDrawOverlays(this)
         val lines = mutableListOf(
-            if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service",
-            if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission"
+            if (accessibilityOk) "\u2713 Accessibility service" else "\u2717 Accessibility service"
         )
         if (!isTv) {
+            val overlayOk = Settings.canDrawOverlays(this)
+            lines.add(if (overlayOk) "\u2713 Overlay permission" else "\u2717 Overlay permission")
             lines.add(if (prefs.batterySetupDone) "\u2713 Battery optimization" else "\u2717 Battery optimization")
         }
         statusText.text = lines.joinToString("\n")

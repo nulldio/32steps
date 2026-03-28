@@ -203,6 +203,24 @@
             android:layout_height="0dp"
             android:visibility="gone" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="About"
+            android:textColor="?colorOnSurface"
+            android:textSize="22sp"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select your headphones from 6000+ models to apply sound correction based on measured frequency response data from AutoEQ. Create custom profiles with the built-in graphic equalizer."
+            android:textColor="?colorOnSurfaceVariant"
+            android:textSize="16sp"
+            android:lineSpacingMultiplier="1.4"
+            android:layout_marginBottom="24dp" />
+
         <!-- Setup -->
         <TextView
             android:id="@+id/status_text"
@@ -222,24 +240,6 @@
             app:cornerRadius="24dp"
             android:visibility="gone"
             android:focusable="true"
-            android:layout_marginBottom="24dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="About"
-            android:textColor="?colorOnSurface"
-            android:textSize="22sp"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Select your headphones from 6000+ models to apply sound correction based on measured frequency response data from AutoEQ. Create custom profiles with the built-in graphic equalizer."
-            android:textColor="?colorOnSurfaceVariant"
-            android:textSize="16sp"
-            android:lineSpacingMultiplier="1.4"
             android:layout_marginBottom="24dp" />
 
         <!-- EQ Presets -->
