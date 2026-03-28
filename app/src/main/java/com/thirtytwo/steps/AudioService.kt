@@ -103,27 +103,48 @@ class AudioService : Service() {
     }
 
     /**
-     * On TV, create a MediaSession that captures volume key events.
-     * When a MediaSession has a VolumeProvider, the system routes volume
-     * keys to our session instead of changing system volume directly.
-     * This prevents the double-step issue on devices like Mi Box 3.
+     * On TV, create a MediaSession with a VolumeProvider that handles all volume control.
+     * The system routes volume key presses to our VolumeProvider instead of changing
+     * system volume directly. This prevents the double-step issue and hides the system
+     * volume overlay. The AccessibilityService defers to this on TV (returns false).
      */
     private fun setupTvMediaSession() {
         val session = MediaSession(this, "32steps")
         session.setPlaybackState(
             PlaybackState.Builder()
                 .setState(PlaybackState.STATE_PLAYING, 0, 1f)
-                .setActions(PlaybackState.ACTION_PLAY)
                 .build()
         )
-        session.setCallback(object : MediaSession.Callback() {
-            override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
-                // Let AccessibilityService handle volume keys
-                return false
+
+        val vp = object : android.media.VolumeProvider(
+            android.media.VolumeProvider.VOLUME_CONTROL_ABSOLUTE,
+            prefs.totalSteps,
+            volumeController.currentStep
+        ) {
+            override fun onSetVolumeTo(volume: Int) {
+                volumeController.setStep(volume)
+                setCurrentVolume(volumeController.currentStep)
             }
-        })
+
+            override fun onAdjustVolume(direction: Int) {
+                when (direction) {
+                    android.media.AudioManager.ADJUST_RAISE -> volumeController.stepUp()
+                    android.media.AudioManager.ADJUST_LOWER -> volumeController.stepDown()
+                }
+                setCurrentVolume(volumeController.currentStep)
+            }
+        }
+
+        session.setPlaybackToRemote(vp)
         session.isActive = true
         mediaSession = session
+
+        // Keep VolumeProvider's max/current in sync with step changes
+        volumeController.addStepListener { step, total ->
+            try {
+                vp.setCurrentVolume(step)
+            } catch (_: Throwable) {}
+        }
     }
 
     private fun setupHeadphoneDetector() {
