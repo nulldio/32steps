@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.HapticFeedbackConstants
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 
@@ -81,9 +82,14 @@ class GraphicEqView @JvmOverloads constructor(
     private val barWidth = dp(8f)
     private val cardRadius = dp(16f)
 
-    // Touch
+    // Touch + D-pad
     private var draggingBand = -1
+    private var selectedBand = -1 // for D-pad navigation
     private var lastHapticStep = Int.MIN_VALUE
+    private val selectedRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = dp(3f)
+    }
 
     // Reusable
     private val curvePath = Path()
@@ -114,6 +120,7 @@ class GraphicEqView @JvmOverloads constructor(
         dotRingPaint.color = withAlpha(accent, 180)
         dbValuePaint.color = accent
         freqLabelPaint.color = withAlpha(onSurface, 150)
+        selectedRingPaint.color = Color.WHITE
     }
 
     fun setGains(newGains: FloatArray) {
@@ -207,9 +214,12 @@ class GraphicEqView @JvmOverloads constructor(
             val x = bandX[i]
             val y = bandY[i]
 
-            // Dot with ring
+            // Dot with ring (+ highlight if D-pad selected)
             canvas.drawCircle(x, y, dotRadius, dotPaint)
             canvas.drawCircle(x, y, dotRadius + dp(1f), dotRingPaint)
+            if (i == selectedBand) {
+                canvas.drawCircle(x, y, dotRadius + dp(5f), selectedRingPaint)
+            }
 
             // dB value above/below dot depending on position
             val dbText = String.format("%.1f", gains[i])
@@ -262,6 +272,61 @@ class GraphicEqView @JvmOverloads constructor(
             }
         }
         return false
+    }
+
+    // --- D-pad / remote control ---
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                if (selectedBand < 0) selectedBand = 0
+                else selectedBand = (selectedBand - 1).coerceAtLeast(0)
+                performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                invalidate()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                if (selectedBand < 0) selectedBand = 0
+                else selectedBand = (selectedBand + 1).coerceAtMost(bandCount - 1)
+                performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                invalidate()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_UP -> {
+                if (selectedBand >= 0) {
+                    val newGain = (gains[selectedBand] + 0.5f).coerceAtMost(maxDb)
+                    gains[selectedBand] = newGain
+                    listener?.onGainChanged(selectedBand, newGain)
+                    invalidate()
+                    return true
+                }
+            }
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                if (selectedBand >= 0) {
+                    val newGain = (gains[selectedBand] - 0.5f).coerceAtLeast(minDb)
+                    gains[selectedBand] = newGain
+                    listener?.onGainChanged(selectedBand, newGain)
+                    invalidate()
+                    return true
+                }
+            }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                if (selectedBand < 0) selectedBand = 0
+                else {
+                    // Reset selected band to 0
+                    gains[selectedBand] = 0f
+                    listener?.onGainChanged(selectedBand, 0f)
+                }
+                invalidate()
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    init {
+        isFocusable = true
+        isFocusableInTouchMode = true
     }
 
     private fun findNearestBand(x: Float): Int {
