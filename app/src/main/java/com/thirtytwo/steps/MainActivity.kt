@@ -604,11 +604,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 searchResultsView.visibility = View.VISIBLE
-                // On TV, dismiss keyboard so user can D-pad to results
-                if (isTv) {
-                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
-                }
                 for (profile in currentResults) {
                     val item = layoutInflater.inflate(R.layout.item_preset, searchResultsView, false)
                     item.findViewById<TextView>(R.id.preset_name).text = profile.name
