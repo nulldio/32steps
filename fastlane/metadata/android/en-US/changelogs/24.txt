@@ -1,0 +1,5 @@
+- Android TV support (sound profiles and graphic EQ, custom steps not supported)
+- Two-column TV layout with D-pad navigation
+- Landscape graphic EQ editor
+- D-pad controls for EQ bands (left/right select, up/down adjust)
+- Various bug fixes and stability improvements
