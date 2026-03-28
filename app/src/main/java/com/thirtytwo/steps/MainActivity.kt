@@ -413,6 +413,7 @@ class MainActivity : AppCompatActivity() {
                             .show()
                         true
                     }
+                    inner.nextFocusRightId = editBtn.id
                     editBtn.nextFocusLeftId = inner.id
                 }
             }
