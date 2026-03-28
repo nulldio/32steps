@@ -20,7 +20,7 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
 ## Features
 
 - **Custom volume steps** - 1 to 1000 steps, replacing Android's default 15-25
-- **6000+ headphone sound profiles** - AutoEQ corrections for accurate sound, updated daily
+- **6000+ headphone sound profiles** - AutoEQ corrections for accurate sound, updated automatically
 - **10-band graphic equalizer** - Create custom profiles or fine-tune AutoEQ profiles
 - **Channel balance** - Left/right volume control for hearing compensation
 - **Volume overlay** - Floating popup with expandable stream sliders (Media, Call, Ring, Notification, Alarm)
