@@ -272,11 +272,11 @@ class MainActivity : AppCompatActivity() {
     private fun refreshOneAppSlider(sliderId: Int, counterId: Int, stream: Int, audioManager: android.media.AudioManager) {
         val max = audioManager.getStreamMaxVolume(stream)
         val current = audioManager.getStreamVolume(stream)
-        findViewById<SeekBar>(sliderId).apply {
+        findViewById<SeekBar>(sliderId)?.apply {
             this.max = max
             progress = current
         }
-        findViewById<TextView>(counterId).text = "$current/$max"
+        findViewById<TextView>(counterId)?.text = "$current/$max"
     }
 
     private fun updateVolumeBar() {
