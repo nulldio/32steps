@@ -158,6 +158,10 @@ jobs:
           git push origin main
           git push origin "v$NEW_NAME"
 
+      - name: Rename APK
+        if: steps.check.outputs.changed == 'true'
+        run: cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/32steps.apk
+
       - name: Create GitHub Release
         if: steps.check.outputs.changed == 'true'
         uses: softprops/action-gh-release@v2
@@ -165,6 +169,6 @@ jobs:
           tag_name: v${{ env.NEW_NAME }}
           name: v${{ env.NEW_NAME }}
           body: ${{ env.CHANGELOG }}
-          files: app/build/outputs/apk/release/app-release.apk
+          files: app/build/outputs/apk/release/32steps.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
