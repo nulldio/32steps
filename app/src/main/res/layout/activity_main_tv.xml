@@ -243,6 +243,7 @@
             android:text="Complete Setup"
             android:textSize="16sp"
             app:cornerRadius="24dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:visibility="gone"
             android:focusable="true"
             android:layout_marginBottom="24dp" />
