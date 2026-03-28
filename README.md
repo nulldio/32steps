@@ -19,7 +19,7 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="150" />
 </p>
 
-**Android TV**
+**Android TV** (custom steps not supported)
 
 <p float="left">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" width="300" />
@@ -36,7 +36,7 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
 - **Ringer mode toggle** - Switch Ring/Vibrate/Silent from the overlay
 - **Preset system** - Save multiple headphone + step count combos, switch with one tap
 - **Haptic feedback** - Tactile response on all controls
-- **Android TV support** - Sound profiles and graphic EQ with D-pad navigation (custom steps not supported)
+- **Android TV support** - Sound profiles and graphic EQ with D-pad navigation
 - **No root, no internet, no ads, no tracking**
 
 > **Note:** Custom volume stepping is not available on Android TV due to platform limitations. On TV, the app provides sound profiles and graphic EQ only.
