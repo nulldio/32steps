@@ -14,6 +14,7 @@ Override Android's default volume steps. Set your own custom step count (1-1000)
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="200" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="200" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="200" />
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="200" />
 </p>
 
 ## Features
