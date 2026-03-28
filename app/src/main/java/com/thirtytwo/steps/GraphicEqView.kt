@@ -279,15 +279,26 @@ class GraphicEqView @JvmOverloads constructor(
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                if (selectedBand < 0) selectedBand = 0
-                else selectedBand = (selectedBand - 1).coerceAtLeast(0)
+                if (selectedBand <= 0) {
+                    // At first band or no selection - let focus leave the view
+                    selectedBand = -1
+                    invalidate()
+                    return false
+                }
+                selectedBand = selectedBand - 1
                 performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 invalidate()
                 return true
             }
             KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                if (selectedBand >= bandCount - 1) {
+                    // At last band - let focus leave the view
+                    selectedBand = -1
+                    invalidate()
+                    return false
+                }
                 if (selectedBand < 0) selectedBand = 0
-                else selectedBand = (selectedBand + 1).coerceAtMost(bandCount - 1)
+                else selectedBand = selectedBand + 1
                 performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 invalidate()
                 return true
