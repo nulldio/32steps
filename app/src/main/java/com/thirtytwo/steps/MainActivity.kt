@@ -52,7 +52,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        val isTv = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
+        setContentView(if (isTv) R.layout.activity_main_tv else R.layout.activity_main)
 
         prefs = PrefsManager(this)
         volumeController = VolumeController.getInstance(this)
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         }
         // EQ Presets
         loadEqPresets()
-        findViewById<android.view.View>(R.id.btn_import_eq_preset).setOnClickListener {
+        findViewById<android.view.View>(R.id.btn_import_eq_preset)?.setOnClickListener {
             it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
             EqPresetHelper.importPreset(importPresetLauncher)
         }
@@ -205,8 +206,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupStreamSliders() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-        val expandBtn = findViewById<ImageView>(R.id.btn_expand_app)
-        val extraSliders = findViewById<View>(R.id.extra_sliders_app)
+        val expandBtn = findViewById<ImageView>(R.id.btn_expand_app) ?: return
+        val extraSliders = findViewById<View>(R.id.extra_sliders_app) ?: return
         var expanded = false
 
         expandBtn.setOnClickListener {
@@ -667,14 +668,14 @@ class MainActivity : AppCompatActivity() {
         val next = nextMissingPermission()
 
         if (next == null) {
-            findViewById<View>(R.id.permissions_title).visibility = View.GONE
-            findViewById<View>(R.id.status_card).visibility = View.GONE
+            findViewById<View>(R.id.permissions_title)?.visibility = View.GONE
+            findViewById<View>(R.id.status_card)?.visibility = View.GONE
             setupBtn.visibility = View.GONE
             return
         }
 
-        findViewById<View>(R.id.permissions_title).visibility = View.VISIBLE
-        findViewById<View>(R.id.status_card).visibility = View.VISIBLE
+        findViewById<View>(R.id.permissions_title)?.visibility = View.VISIBLE
+        findViewById<View>(R.id.status_card)?.visibility = View.VISIBLE
         setupBtn.visibility = View.VISIBLE
 
         val accessibilityOk = isAccessibilityEnabled()
