@@ -137,7 +137,7 @@ class VolumeOverlay(private val context: Context) {
 
             if (!isDragging && !isExpanded) {
                 hideRunnable = Runnable { hide() }
-                handler.postDelayed(hideRunnable!!, SHOW_DURATION_MS)
+                handler.postDelayed(hideRunnable!!, hideDelay)
             }
         }
     }
@@ -160,7 +160,7 @@ class VolumeOverlay(private val context: Context) {
                 isDragging = false
                 if (!isExpanded) {
                     hideRunnable = Runnable { hide() }
-                    handler.postDelayed(hideRunnable!!, SHOW_DURATION_MS)
+                    handler.postDelayed(hideRunnable!!, hideDelay)
                 }
             }
         })
@@ -187,7 +187,7 @@ class VolumeOverlay(private val context: Context) {
             hideRunnable?.let { handler.removeCallbacks(it) }
             if (!isExpanded) {
                 hideRunnable = Runnable { hide() }
-                handler.postDelayed(hideRunnable!!, SHOW_DURATION_MS)
+                handler.postDelayed(hideRunnable!!, hideDelay)
             }
         }
     }
@@ -219,7 +219,7 @@ class VolumeOverlay(private val context: Context) {
             hideRunnable?.let { handler.removeCallbacks(it) }
             if (!isExpanded) {
                 hideRunnable = Runnable { hide() }
-                handler.postDelayed(hideRunnable!!, SHOW_DURATION_MS)
+                handler.postDelayed(hideRunnable!!, hideDelay)
             }
 
             if (isExpanded) refreshStreamSliders()
@@ -296,7 +296,10 @@ class VolumeOverlay(private val context: Context) {
         }
     }
 
+    private val hideDelay get() = if (isTv) SHOW_DURATION_TV_MS else SHOW_DURATION_MS
+
     companion object {
         private const val SHOW_DURATION_MS = 1500L
+        private const val SHOW_DURATION_TV_MS = 3000L
     }
 }
