@@ -1,0 +1,42 @@
+name: Bug Report
+description: Something not working right
+labels: ["bug"]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: e.g. Pixel 7, Samsung S24, Xiaomi 14
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version
+      placeholder: e.g. 14, 13, 12
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      placeholder: e.g. 2.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      placeholder: Describe the issue
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open app
+        2. Tap ...
+        3. ...
+    validations:
+      required: false
