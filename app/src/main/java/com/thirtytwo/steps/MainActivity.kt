@@ -364,17 +364,53 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
 
-            // On TV, allow D-pad right to reach the edit button
+            // On TV, split focus: card content = select, edit button = edit
             if (isTv) {
-                (card as android.view.ViewGroup).descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+                card.isFocusable = false
+                card.isClickable = false
                 val inner = (card as android.view.ViewGroup).getChildAt(0)
                 if (inner != null) {
+                    inner.id = android.view.View.generateViewId()
                     inner.isFocusable = true
                     inner.isClickable = true
-                    inner.setOnClickListener { card.performClick() }
-                    inner.setOnLongClickListener { card.performLongClick() }
+                    inner.setOnClickListener {
+                        it.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
+                        if (prefs.soundProfile == preset.headphoneName) {
+                            prefs.soundProfile = null
+                            refreshPresetHighlights()
+                            val intent = Intent(this@MainActivity, AudioService::class.java)
+                            intent.action = AudioService.ACTION_CLEAR_PROFILE
+                            startService(intent)
+                        } else {
+                            prefs.soundProfile = preset.headphoneName
+                            volumeController.syncFromSystem()
+                            updateVolumeBar()
+                            refreshPresetHighlights()
+                            val intent = Intent(this@MainActivity, AudioService::class.java)
+                            intent.action = AudioService.ACTION_APPLY_PROFILE
+                            startService(intent)
+                        }
+                    }
+                    inner.setOnLongClickListener {
+                        it.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                        AlertDialog.Builder(this)
+                            .setMessage("Remove ${preset.headphoneName}?")
+                            .setPositiveButton("Remove") { _, _ ->
+                                prefs.removePreset(preset.headphoneName)
+                                if (prefs.soundProfile == preset.headphoneName) {
+                                    prefs.soundProfile = null
+                                    val intent2 = Intent(this@MainActivity, AudioService::class.java)
+                                    intent2.action = AudioService.ACTION_CLEAR_PROFILE
+                                    startService(intent2)
+                                }
+                                loadPresetGrid()
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        true
+                    }
+                    editBtn.nextFocusLeftId = inner.id
                 }
-                editBtn.nextFocusLeftId = inner?.id ?: card.id
             }
 
             presetList.addView(card)
