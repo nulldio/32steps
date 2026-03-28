@@ -44,9 +44,15 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        // Hide overlay toggle on TV (no overlay)
+        // TV: hide overlay toggle (no overlay) and diagnostics
         if (isTv) {
             findViewById<View>(R.id.switch_hide_overlay)?.let { findParentCard(it)?.visibility = View.GONE }
+            findViewById<View>(R.id.diagnostics_text)?.let { findParentCard(it)?.visibility = View.GONE }
+            hideTextViewByContent("Device capabilities")
+            // Hide Gain control header if channel balance isn't available
+            if (!caps.hasStereoDP) {
+                hideTextViewByContent("Gain control")
+            }
         } else {
             setupHideOverlay()
         }
