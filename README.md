@@ -9,6 +9,8 @@
 
 Override Android's default volume steps. Set your own custom step count (1-1000). No root required. Includes 6000+ headphone sound profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq), updated automatically.
 
+**Android**
+
 <p float="left">
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="150" />
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="150" />
