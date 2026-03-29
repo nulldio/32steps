@@ -1,1 +1,1 @@
-Custom volume steps, headphone EQ, and audio effects for Android
+Custom volume steps, headphone EQ, and graphic equalizer for Android
