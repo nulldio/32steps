@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid"></a>
+  <a href="https://obtainium.imranr.dev/redirect?app=%7B%22id%22%3A%22com.thirtytwo.steps%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fnulldio%2F32steps%22%2C%22author%22%3A%22nulldio%22%2C%22name%22%3A%2232steps%22%7D"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="80" alt="Get it on Obtainium"></a>
   <br><br>
   <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.thirtytwo.steps&label=IzzyOnDroid&style=for-the-badge" alt="IzzyOnDroid"></a>
   <a href="https://shields.rbtlog.dev/com.thirtytwo.steps"><img src="https://shields.rbtlog.dev/simple/com.thirtytwo.steps?style=for-the-badge" alt="RB Status"></a>
