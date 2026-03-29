@@ -7,7 +7,7 @@
   <a href="https://shields.rbtlog.dev/com.thirtytwo.steps"><img src="https://shields.rbtlog.dev/simple/com.thirtytwo.steps?style=for-the-badge" alt="RB Status"></a>
 </p>
 
-Override Android's default volume steps. Set your own custom step count (1-1000). No root required. Includes 6000+ headphone sound profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq), updated automatically.
+Override Android's default volume steps with custom step counts. Includes 6000+ headphone EQ profiles from [AutoEQ](https://github.com/jaakkopasanen/AutoEq) and a 10-band graphic equalizer. No root required.
 
 **Android**
 
