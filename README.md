@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="60" alt="Get it at IzzyOnDroid"></a>
-  &nbsp;&nbsp;&nbsp;
+  &nbsp;
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/nulldio/32steps/"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="60" alt="Get it on Obtainium"></a>
   <br><br>
   <a href="https://apt.izzysoft.de/packages/com.thirtytwo.steps"><img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.thirtytwo.steps&label=IzzyOnDroid&style=for-the-badge" alt="IzzyOnDroid"></a>
