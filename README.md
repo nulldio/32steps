@@ -73,6 +73,8 @@ On Android 13+, you may need to allow restricted settings first. Go to **Setting
 
 Available on [Droid-ify](https://github.com/Droid-ify/client) and [Neo Store](https://github.com/NeoApplications/Neo-Store) (IzzyOnDroid repo is pre-configured), or add the [IzzyOnDroid repo](https://apt.izzysoft.de/fdroid/repo) to the F-Droid client.
 
+Also available via [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates directly from GitHub.
+
 You can also grab the APK directly from the [Releases](https://github.com/nulldio/32steps/releases) page.
 
 ## Building from source
