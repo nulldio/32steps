@@ -38,7 +38,10 @@ class VolumeController(private val context: Context) {
         get() = prefs.currentStep
         private set(value) { prefs.currentStep = value }
 
-    private val mbPerSystemStep: Int by lazy { measureMbPerStep() }
+    // Per-level dB gaps (measured individually, not averaged)
+    private val perLevelMb: IntArray by lazy { measurePerLevelMb() }
+    // Pre-computed lookup table: stepTable[step] = Pair(systemLevel, gainOffsetMb)
+    private var stepTable: Array<Pair<Int, Int>> = emptyArray()
     private var lastSystemVol = -1
     @Volatile private var selfChanging = false
 
@@ -229,19 +232,37 @@ class VolumeController(private val context: Context) {
             return
         }
 
-        val (targetVol, gainOffset) = computeMapping(newStep)
+        ensureStepTable()
+        val (targetVol, gainOffset) = if (newStep < stepTable.size) stepTable[newStep]
+            else computeMappingFallback(newStep)
         val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         if (targetVol != currentVol) {
-            val needsSmoothing = currentVol > 0 && abs(targetVol - currentVol) <= 2
-            if (needsSmoothing) {
-                val preAttenuation = -(targetVol - currentVol) * mbPerSystemStep + gainOffset
-                setAllGain(preAttenuation)
+            // Smooth ramp: pre-compensate, change system vol, ramp to final gain
+            val currentGainMb = if (currentStep > 0 && currentStep < stepTable.size)
+                stepTable[currentStep].second else gainOffset
+            // Get the actual dB gap for this specific boundary
+            val boundaryMb = if (targetVol > 0 && targetVol <= perLevelMb.size)
+                perLevelMb[(targetVol - 1).coerceIn(0, perLevelMb.size - 1)]
+            else 300
+
+            // Phase 1: pre-attenuate to compensate for upcoming system volume change
+            val direction = if (targetVol > currentVol) 1 else -1
+            val preGain = gainOffset + (direction * boundaryMb)
+            setAllGain(preGain)
+
+            // Phase 2: change system volume (gain compensates so net level stays same)
+            handler.postDelayed({
                 setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
-                handler.postDelayed({ setAllGain(gainOffset) }, 15)
-            } else {
-                setAllGain(gainOffset)
-                setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
+            }, 5)
+
+            // Phase 3-6: ramp to final gain over 60ms in 4 steps
+            val rampSteps = 4
+            val rampInterval = 15L
+            for (i in 1..rampSteps) {
+                val progress = i.toFloat() / rampSteps
+                val rampGain = preGain + ((gainOffset - preGain) * progress).toInt()
+                handler.postDelayed({ setAllGain(rampGain) }, 5 + (i * rampInterval))
             }
         } else {
             setAllGain(gainOffset)
@@ -272,38 +293,102 @@ class VolumeController(private val context: Context) {
         }
         val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
         currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
-        // Re-apply gain for the new step WITHOUT changing system volume
-        // This prevents volume jumps when changing totalSteps
         setAllGain(gainOffsetForStep(currentStep))
     }
 
-    // Volume mapping
+    // ──────────────────────────────────────────────
+    // Gold standard volume mapping
+    // ──────────────────────────────────────────────
 
-    private fun computeMapping(step: Int): Pair<Int, Int> {
+    /** Measure the actual dB gap for EACH individual system volume level */
+    private fun measurePerLevelMb(): IntArray {
+        if (systemMax <= 1) return intArrayOf(300)
+        return IntArray(systemMax) { i ->
+            if (i == 0) {
+                // Level 0 to 1: large jump from silence
+                600
+            } else {
+                val dbThis = 20.0 * ln(i.toDouble() / systemMax) / ln(10.0)
+                val dbNext = 20.0 * ln((i + 1).coerceAtMost(systemMax).toDouble() / systemMax) / ln(10.0)
+                val mb = ((dbNext - dbThis) * 100).toInt()
+                if (mb <= 0) 300 else mb
+            }
+        }
+    }
+
+    /**
+     * Build a pre-computed lookup table mapping each custom step to
+     * (systemLevel, gainOffsetMb). Maximizes gain range within each
+     * system level to minimize boundary crossings.
+     */
+    private fun ensureStepTable() {
+        if (stepTable.size == totalSteps + 1) return
+        buildStepTable()
+    }
+
+    private fun buildStepTable() {
+        val steps = totalSteps
+        if (steps <= 0 || systemMax <= 1) {
+            stepTable = Array(steps + 1) { Pair(1, 0) }
+            return
+        }
+
+        // Calculate total dB range from level 1 to systemMax
+        val totalRangeMb = perLevelMb.sum()
+
+        // Each custom step covers this much of the total range
+        val mbPerCustomStep = totalRangeMb.toFloat() / steps
+
+        val table = Array(steps + 1) { Pair(1, 0) }
+        table[0] = Pair(0, 0) // step 0 = mute
+
+        // Walk through custom steps, accumulating dB
+        var accumulatedMb = 0f
+        for (step in 1..steps) {
+            accumulatedMb = step * mbPerCustomStep
+
+            // Find which system level this falls in
+            var sysLevel = 1
+            var mbSoFar = 0f
+            for (level in 1 until systemMax) {
+                val levelMb = perLevelMb[level].toFloat()
+                if (mbSoFar + levelMb >= accumulatedMb) {
+                    sysLevel = level
+                    break
+                }
+                mbSoFar += levelMb
+                sysLevel = level + 1
+            }
+            sysLevel = sysLevel.coerceIn(1, systemMax)
+
+            // Gain offset: how far into this system level's range we are
+            // Negative = attenuate from the system level's natural volume
+            val mbIntoLevel = accumulatedMb - mbSoFar
+            val levelTotalMb = perLevelMb[sysLevel.coerceIn(0, perLevelMb.size - 1)].toFloat()
+            val gainOffset = -(levelTotalMb - mbIntoLevel).toInt()
+
+            table[step] = Pair(sysLevel, gainOffset)
+        }
+
+        stepTable = table
+    }
+
+    /** Fallback mapping if step table isn't ready */
+    private fun computeMappingFallback(step: Int): Pair<Int, Int> {
         val fraction = step.toFloat() / totalSteps
         val floatSysVol = 1 + fraction * (systemMax - 1)
         val sysVol = ceil(floatSysVol).toInt().coerceIn(1, systemMax)
+        val avgMb = if (perLevelMb.isNotEmpty()) perLevelMb.average().toInt() else 300
         val attenuation = sysVol - floatSysVol
-        val gainOffset = -(attenuation * mbPerSystemStep).toInt()
+        val gainOffset = -(attenuation * avgMb).toInt()
         return sysVol to gainOffset
     }
 
     private fun gainOffsetForStep(step: Int): Int {
         if (step <= 0) return 0
-        return computeMapping(step).second
-    }
-
-    private fun measureMbPerStep(): Int {
-        if (systemMax <= 1) return 300
-        var totalDb = 0.0
-        for (i in 1 until systemMax) {
-            val dbThis = 20.0 * ln(i.toDouble() / systemMax) / ln(10.0)
-            val dbNext = 20.0 * ln((i + 1).toDouble() / systemMax) / ln(10.0)
-            totalDb += (dbNext - dbThis)
-        }
-        val avgMbPerStep = (totalDb / (systemMax - 1) * 100).toInt()
-        if (avgMbPerStep <= 0) return 300
-        return avgMbPerStep
+        ensureStepTable()
+        return if (step < stepTable.size) stepTable[step].second
+            else computeMappingFallback(step).second
     }
 
     // ──────────────────────────────────────────────
