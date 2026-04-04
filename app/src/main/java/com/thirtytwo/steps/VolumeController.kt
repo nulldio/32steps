@@ -358,38 +358,20 @@ class VolumeController(private val context: Context) {
             return
         }
 
-        // Calculate total dB range from level 1 to systemMax
-        val totalRangeMb = perLevelMb.sum()
-
-        // Each custom step covers this much of the total range
-        val mbPerCustomStep = totalRangeMb.toFloat() / steps
-
         val table = Array(steps + 1) { Pair(1, 0) }
         table[0] = Pair(0, 0) // step 0 = mute
 
-        // Walk through custom steps, accumulating dB
+        // Linear distribution across system levels (50% of steps = 50% of volume)
+        // but with per-level dB measurement for accurate boundary compensation
         for (step in 1..steps) {
-            val accumulatedMb = step * mbPerCustomStep
+            val fraction = step.toFloat() / steps
+            val floatSysVol = 1 + fraction * (systemMax - 1)
+            val sysLevel = ceil(floatSysVol).toInt().coerceIn(1, systemMax)
 
-            // Find which system level this falls in
-            var sysLevel = 1
-            var mbSoFar = 0f
-            for (level in 1 until systemMax) {
-                val levelMb = perLevelMb[level].toFloat()
-                if (mbSoFar + levelMb >= accumulatedMb) {
-                    sysLevel = level
-                    break
-                }
-                mbSoFar += levelMb
-                sysLevel = level + 1
-            }
-            sysLevel = sysLevel.coerceIn(1, systemMax)
-
-            // Gain offset: how far into this system level's range we are
-            // Negative = attenuate from the system level's natural volume
-            val mbIntoLevel = accumulatedMb - mbSoFar
-            val levelTotalMb = perLevelMb[sysLevel.coerceIn(0, perLevelMb.size - 1)].toFloat()
-            val gainOffset = -(levelTotalMb - mbIntoLevel).toInt()
+            // Use per-level measurement for accurate gain offset at this specific level
+            val levelMb = perLevelMb[sysLevel.coerceIn(0, perLevelMb.size - 1)]
+            val attenuation = sysLevel - floatSysVol
+            val gainOffset = -(attenuation * levelMb).toInt()
 
             table[step] = Pair(sysLevel, gainOffset)
         }
