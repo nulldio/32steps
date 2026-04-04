@@ -1,1 +1,7 @@
-- Remove unused RECORD_AUDIO permission
+- Improved volume stepping smoothness
+- Smoother transitions at system volume boundaries
+- Better step accuracy across different devices
+- Fix volume distribution so middle steps feel like middle volume
+- Fix volume position resetting when opening the app
+- Removed unused permission
+- Internal stability improvements
