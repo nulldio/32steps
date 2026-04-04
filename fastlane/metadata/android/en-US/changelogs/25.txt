@@ -1,0 +1,4 @@
+- Improved volume stepping smoothness at system level boundaries
+- Per-level dB measurement for accurate step calibration
+- Smooth gain ramp on single press, direct set on hold
+- Pre-computed step lookup table for consistent stepping
