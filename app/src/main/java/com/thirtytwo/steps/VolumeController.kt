@@ -239,8 +239,6 @@ class VolumeController(private val context: Context) {
 
         if (targetVol != currentVol) {
             // Smooth ramp: pre-compensate, change system vol, ramp to final gain
-            val currentGainMb = if (currentStep > 0 && currentStep < stepTable.size)
-                stepTable[currentStep].second else gainOffset
             // Get the actual dB gap for this specific boundary
             val boundaryMb = if (targetVol > 0 && targetVol <= perLevelMb.size)
                 perLevelMb[(targetVol - 1).coerceIn(0, perLevelMb.size - 1)]
