@@ -1,0 +1,2 @@
+- Fix volume distribution so middle steps feel like middle volume
+- Internal stability improvements
