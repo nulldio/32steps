@@ -48,7 +48,7 @@ class VolumeController(private val context: Context) {
     @Volatile private var selfChanging = false
 
     // Equal loudness performance: only recalculate at 5% volume boundaries
-    private var lastLoudnessFraction = -1f
+    private var lastLoudnessQuantized = -1
 
     // Listeners
 
@@ -199,7 +199,11 @@ class VolumeController(private val context: Context) {
             val max = audioManager.getStreamMaxVolume(stream)
             val newVol = (current + 1).coerceAtMost(max)
             setSystemVolume(stream, newVol)
-            currentStep = (newVol.toFloat() / max * totalSteps).roundToInt().coerceIn(0, totalSteps)
+            // Logarithmic mapping instead of linear
+            currentStep = if (max > 0 && newVol > 0) {
+                val dbFraction = ln(newVol.toDouble()) / ln(max.toDouble())
+                (dbFraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
+            } else 0
             notifyStepChanged()
             return currentStep
         }
@@ -214,7 +218,10 @@ class VolumeController(private val context: Context) {
             val max = audioManager.getStreamMaxVolume(stream)
             val newVol = (current - 1).coerceAtLeast(0)
             setSystemVolume(stream, newVol)
-            currentStep = (newVol.toFloat() / max * totalSteps).roundToInt().coerceIn(0, totalSteps)
+            currentStep = if (max > 0 && newVol > 0) {
+                val dbFraction = ln(newVol.toDouble()) / ln(max.toDouble())
+                (dbFraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
+            } else 0
             notifyStepChanged()
             return currentStep
         }
@@ -289,9 +296,9 @@ class VolumeController(private val context: Context) {
     private fun updateEqualLoudnessIfNeeded() {
         if (!prefs.equalLoudnessEnabled) return
         val fraction = currentStep.toFloat() / totalSteps.coerceAtLeast(1)
-        val quantized = (fraction * 20).toInt() / 20f
-        if (quantized != lastLoudnessFraction) {
-            lastLoudnessFraction = quantized
+        val quantized = (fraction * 20).toInt()
+        if (quantized != lastLoudnessQuantized) {
+            lastLoudnessQuantized = quantized
             for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
         }
     }
@@ -412,8 +419,8 @@ class VolumeController(private val context: Context) {
     // Pre-EQ: Sound profiles + Equal loudness
     // ──────────────────────────────────────────────
 
-    private var activeProfile: HeadphoneProfile? = null
-    private var profileManager: SoundProfileManager? = null
+    @Volatile private var activeProfile: HeadphoneProfile? = null
+    @Volatile private var profileManager: SoundProfileManager? = null
     private var userEqGains = FloatArray(PRE_EQ_BAND_COUNT)
     private var isPreviewingEq = false
     private var cachedPreampDb = prefs.preampDb
@@ -501,7 +508,7 @@ class VolumeController(private val context: Context) {
     fun setEqualLoudness(enabled: Boolean, thresholdDb: Int? = null) {
         prefs.equalLoudnessEnabled = enabled
         if (thresholdDb != null) prefs.equalLoudnessThresholdDb = thresholdDb
-        lastLoudnessFraction = -1f
+        lastLoudnessQuantized = -1
         for ((sid, dp) in dynamicsProcessors) applyPreEq(dp, sid)
     }
 
@@ -933,6 +940,8 @@ class VolumeController(private val context: Context) {
     }
 
     fun release() {
+        handler.removeCallbacksAndMessages(null)
+        rampRunnables.clear()
         stopObserving()
         for ((_, dp) in dynamicsProcessors) {
             try { dp.enabled = false; dp.release() } catch (_: Exception) {}
