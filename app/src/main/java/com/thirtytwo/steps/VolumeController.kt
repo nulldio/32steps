@@ -40,6 +40,7 @@ class VolumeController(private val context: Context) {
 
     // Per-level dB gaps (measured individually, not averaged)
     private val perLevelMb: IntArray by lazy { measurePerLevelMb() }
+    private val rampRunnables = mutableListOf<Runnable>()
     // Pre-computed lookup table: stepTable[step] = Pair(systemLevel, gainOffsetMb)
     private var stepTable: Array<Pair<Int, Int>> = emptyArray()
     private var lastSystemVol = -1
@@ -238,7 +239,10 @@ class VolumeController(private val context: Context) {
         val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
         if (targetVol != currentVol) {
-            // Smooth ramp: pre-compensate, change system vol, ramp to final gain
+            // Cancel any pending ramp from previous step
+            for (r in rampRunnables) handler.removeCallbacks(r)
+            rampRunnables.clear()
+
             // Get the actual dB gap for this specific boundary
             val boundaryMb = if (targetVol > 0 && targetVol <= perLevelMb.size)
                 perLevelMb[(targetVol - 1).coerceIn(0, perLevelMb.size - 1)]
@@ -250,9 +254,9 @@ class VolumeController(private val context: Context) {
             setAllGain(preGain)
 
             // Phase 2: change system volume (gain compensates so net level stays same)
-            handler.postDelayed({
-                setSystemVolume(AudioManager.STREAM_MUSIC, targetVol)
-            }, 5)
+            val sysRunnable = Runnable { setSystemVolume(AudioManager.STREAM_MUSIC, targetVol) }
+            rampRunnables.add(sysRunnable)
+            handler.postDelayed(sysRunnable, 5)
 
             // Phase 3-6: ramp to final gain over 60ms in 4 steps
             val rampSteps = 4
@@ -260,7 +264,9 @@ class VolumeController(private val context: Context) {
             for (i in 1..rampSteps) {
                 val progress = i.toFloat() / rampSteps
                 val rampGain = preGain + ((gainOffset - preGain) * progress).toInt()
-                handler.postDelayed({ setAllGain(rampGain) }, 5 + (i * rampInterval))
+                val r = Runnable { setAllGain(rampGain) }
+                rampRunnables.add(r)
+                handler.postDelayed(r, 5 + (i * rampInterval))
             }
         } else {
             setAllGain(gainOffset)
