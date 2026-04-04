@@ -304,8 +304,13 @@ class VolumeController(private val context: Context) {
             setAllGain(0)
             return
         }
-        val fraction = (sysVol.toFloat() - 1) / (systemMax - 1).coerceAtLeast(1)
-        currentStep = (fraction * totalSteps).roundToInt().coerceIn(1, totalSteps)
+        // Find the highest step that maps to this system volume level
+        ensureStepTable()
+        var bestStep = 1
+        for (i in 1 until stepTable.size) {
+            if (stepTable[i].first <= sysVol) bestStep = i
+        }
+        currentStep = bestStep
         setAllGain(gainOffsetForStep(currentStep))
     }
 
