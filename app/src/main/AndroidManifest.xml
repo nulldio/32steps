@@ -10,7 +10,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- TV: don't require touchscreen so it installs on TV -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
