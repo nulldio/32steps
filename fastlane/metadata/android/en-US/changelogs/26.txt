@@ -1,1 +1,4 @@
+- Improved volume stepping smoothness
+- Smoother transitions at system volume boundaries
+- Better step accuracy across different devices
 - Fix volume position resetting when opening the app
