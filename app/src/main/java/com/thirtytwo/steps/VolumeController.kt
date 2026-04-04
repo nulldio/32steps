@@ -356,9 +356,8 @@ class VolumeController(private val context: Context) {
         table[0] = Pair(0, 0) // step 0 = mute
 
         // Walk through custom steps, accumulating dB
-        var accumulatedMb = 0f
         for (step in 1..steps) {
-            accumulatedMb = step * mbPerCustomStep
+            val accumulatedMb = step * mbPerCustomStep
 
             // Find which system level this falls in
             var sysLevel = 1
