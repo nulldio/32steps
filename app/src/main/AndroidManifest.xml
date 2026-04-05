@@ -73,6 +73,17 @@
             android:foregroundServiceType="mediaPlayback"
             tools:targetApi="29" />
 
+        <service
+            android:name=".StepsTileService"
+            android:exported="true"
+            android:label="32steps"
+            android:icon="@mipmap/ic_launcher"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".BootReceiver"
             android:exported="false">
